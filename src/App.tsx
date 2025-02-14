@@ -1,10 +1,11 @@
-import { ThemeSwitch } from "@/components/theme-switch.tsx";
+import { TerraNumerIA } from "@/pages";
 
 function App() {
   return (
     <>
-      <h1>Hello World !</h1>
-      <ThemeSwitch />
+      <div className={"flex w-screen h-screen justify-between"}>
+        <TerraNumerIA />
+      </div>
     </>
   );
 }
