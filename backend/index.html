@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Response Example</title>
+</head>
+<body>
+<h1>Streaming Data</h1>
+<pre id="response"></pre>
+
+<script>
+    const output = document.getElementById("response");
+
+    const promptData = {
+        prompt: "How can I stream responses?",
+        model: "gpt-3.5-turbo"
+    };
+
+    fetch('http://127.0.0.1:5000/v1/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer your-api-key-here'  // Provide your actual API Key here
+        },
+        body: JSON.stringify(promptData)
+    })
+        .then(async response => {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let done, value;
+
+            // Reading the stream and appending it to the output
+            while (true) {
+                ({done, value} = await reader.read());
+                if (done) break;
+                output.textContent += decoder.decode(value, {stream: true});
+            }
+        })
+        .catch(err => {
+            console.error('Stream error:', err);
+        });
+</script>
+</body>
+</html>
