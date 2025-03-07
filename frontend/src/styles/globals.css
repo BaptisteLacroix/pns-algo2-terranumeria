@@ -4,13 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+@layer base {
+    :root {
     --white: #FFFFFF;
     --blue: #24A1EB;
     --yellow: #F9BB12;
     --green: #00A19A;
     --darkblue: #1A182D;
     --gradient: linear-gradient(90deg, #F9BB12 0%, #00A19A 50%, #12A1C3 100%);
+    }
 }
 
 * {

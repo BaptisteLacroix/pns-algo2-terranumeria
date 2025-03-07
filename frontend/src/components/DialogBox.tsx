@@ -1,4 +1,4 @@
-import { Textarea, Button } from "@heroui/react";
+import { Textarea, Button, ScrollShadow } from "@heroui/react";
 import { useState } from "react";
 
 // Define the Message type
@@ -50,40 +50,41 @@ export const DialogBox = () => {
   };
 
   return (
-    <div className="flex-grow flex flex-col p-4 overflow-auto">
+    <div className="flex flex-col w-full justify-end">
       {/* Display Messages */}
-      <div className="flex-grow overflow-y-auto space-y-4 mb-24">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-xs p-3 rounded-lg ${msg.isUser ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
+      <div className="w-full h-8/10 flex justify-center">
+        <ScrollShadow className="w-2/3 h-full">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-xs p-3 rounded-lg ${msg.isUser ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+        </ScrollShadow>
       </div>
-
-      {/* Textarea at the bottom */}
-      <div>
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-1/2">
-          <div className={"flex flex-row items-center"}>
+      <div className="w-full h-2/10 flex justify-center">
+        <div className="bottom-4 left-1/2 w-2/3">
+          <div className={"flex flex-row items-center gap-2"}>
             <Textarea
-              className="w-full"
+              className="w-full h-20"
+              radius="none" 
               label="Description"
               placeholder="Enter your message"
               value={message.text}
-              variant="faded"
+              variant="flat"
               onChange={(e) =>
                 setMessage({ text: e.target.value, isUser: true })
               }
               onKeyDown={onEnterPress}
             />
-            <Button className={"ml-5"} onPress={submitMessage}>
-              Send
+            <Button className="size-20 hover:bg-yellow" radius="none" onPress={submitMessage} color="primary">
+              Envoyer
             </Button>
           </div>
         </div>
