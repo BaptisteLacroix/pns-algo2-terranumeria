@@ -11,7 +11,7 @@ import {
 
 export const SidePanelRight = () => {
   return (
-    <div className="flex flex-col overflow-y-auto h-screen w-1/6 shadow-[rgba(0,0,15,0.2)_-4px_0px_0px_0px]">
+    <div className="flex flex-col overflow-y-auto h-screen w-1/6 shadow-xl">
       <div className="flex flex-col h-full">
         <Card className="rounded-none h-full">
           <CardHeader className="flex gap-3">
@@ -19,7 +19,6 @@ export const SidePanelRight = () => {
           </CardHeader>
           <CardBody>
             <h2>Choix de la personnalité</h2>
-            <Divider className={"mt-5 mb-5"} />
             <div className={"flex flex-col items-start space-y-4"}>
               {/* Add space-y-4 for margin between users */}
               <User
@@ -42,22 +41,24 @@ export const SidePanelRight = () => {
               />
             </div>
             <Divider className={"mt-5 mb-5"} />
+            <h2>Informations complémentaires</h2>
             <div>
-              <Checkbox>Afficher les tokens</Checkbox>
-              <Checkbox className={"mt-2"}>
+              <Checkbox radius="none">Afficher les tokens</Checkbox>
+              <Checkbox radius="none" className={"mt-2"}>
                 Afficher les autres possibilités
               </Checkbox>
             </div>
             <Divider className={"mt-5 mb-5"} />
-            <div>
+            <div className="pl-5 pr-5">
               <Slider
                 color="primary"
-                defaultValue={0}
-                label="Select a value"
+                defaultValue={1}
+                hideValue={true}
+                label="Vitesse de génération"
                 marks={[
                   {
                     value: 0,
-                    label: "Mano",
+                    label: "Manuel",
                   },
                   {
                     value: 1,
@@ -74,9 +75,8 @@ export const SidePanelRight = () => {
                 step={1}
               />
             </div>
-            <Divider className={"mt-5 mb-5"} />
-            <div className={"flex justify-center"}>
-              <Button className={"w-1/2"}>Token suivant</Button>
+            <div className={"flex"}>
+              <Button className="w-1/2 mt-5 hover:bg-yellow" radius="none" color="primary">Token suivant</Button>
             </div>
           </CardBody>
         </Card>
