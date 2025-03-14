@@ -1,33 +1,37 @@
-import os
 import time
+
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
+
+from env import API_KEY
+from model import Model
 
 app = Flask(__name__)
 
 CORS(app)
 
-API_KEY = os.getenv('API_KEY', 'your-api-key-here')
+print("Loading models")
+print("Loading Mistral")
+mistral_model = Model("mistral")
+print("Mistral loaded")
+print("Loading DeepSeek")
+deepseek_model = Model("deepseek")
+print("DeepSeek loaded")
+print("All models are load")
 
 
-# Mock function to simulate ChatGPT processing and stream the response
-def chatgpt_response_stream(prompt):
+def chatgpt_response_stream(model, prompt):
     """
-    Mock function to simulate ChatGPT processing and stream the response.
-    :param prompt: Prompt text
+    :param model: The model to use ('mistral' or 'deepseek')
+    :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
     """
-    chunks = [
-        "Sure! I'm happy to help you with that.\n",
-        "Let's start with the basics. First, we'll set up the routes...\n",
-        "I will explain how to stream data and handle responses.\n",
-        "This is how you can structure the API for your custom ChatGPT model.\n"
-    ]
-
-    for chunk in chunks:
-        print(f"Processing chunk: {chunk}")
-        yield chunk
-        time.sleep(2)  # Simulating delay in response generation
+    try:
+        for chunk in model.generate_response_stream(prompt):
+            print(f"Processing chunk: {chunk}")
+            yield chunk
+    except Exception as e:
+        yield f"Error generating response: {str(e)}"
 
 
 @app.before_request
@@ -42,7 +46,7 @@ def check_api_key():
             return jsonify({"error": "Unauthorized"}), 401
 
 
-@app.route('/v1/completions', methods=['POST'])
+@app.route('/responses', methods=['POST'])
 def openai_completions():
     """
     Route to handle chat completions with streaming response.
@@ -53,28 +57,27 @@ def openai_completions():
 
         # Validate the required data in the request
         prompt = data.get('prompt', '')
-        model = data.get('model', 'gpt-3.5-turbo')
+        model = data.get('model', 'mistrail')
 
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
 
-        if model != 'gpt-3.5-turbo':
-            return jsonify({"error": "Invalid model specified"}), 400
-
-        # Return the response stream
-        return Response(chatgpt_response_stream(prompt), content_type='text/plain;charset=utf-8', status=200)
+        if model == 'deepseek':
+            return Response(chatgpt_response_stream(deepseek_model, prompt), content_type='text/plain;charset=utf-8', status=200)
+        return Response(chatgpt_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/v1/health', methods=['GET'])
+@app.route('/health', methods=['GET'])
 def health_check():
     """
     Health check endpoint.
-    :return: JSON response
     """
-    return jsonify({"status": "ok"}), 200
+    return jsonify({
+        "status": "ok",
+    }), 200
 
 
 if __name__ == '__main__':

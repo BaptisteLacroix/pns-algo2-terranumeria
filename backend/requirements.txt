@@ -1,0 +1,11 @@
+bitsandbytes
+torch
+torchvision
+torchaudio
+transformers
+accelerate
+huggingface_hub
+numpy
+pandas
+flask
+flask-cors
