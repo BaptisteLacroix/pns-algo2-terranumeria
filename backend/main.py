@@ -1,16 +1,19 @@
 import os
 import time
 from flask import Flask, request, jsonify, Response
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+CORS(app)
 
 API_KEY = os.getenv('API_KEY', 'your-api-key-here')
 
 
-# Mock function to simulate ChatGPT processing
+# Mock function to simulate ChatGPT processing and stream the response
 def chatgpt_response_stream(prompt):
     """
-    Mock function to simulate ChatGPT processing and stream the response
+    Mock function to simulate ChatGPT processing and stream the response.
     :param prompt: Prompt text
     :return: Generator for streaming response
     """
@@ -22,6 +25,7 @@ def chatgpt_response_stream(prompt):
     ]
 
     for chunk in chunks:
+        print(f"Processing chunk: {chunk}")
         yield chunk
         time.sleep(2)  # Simulating delay in response generation
 
@@ -29,7 +33,7 @@ def chatgpt_response_stream(prompt):
 @app.before_request
 def check_api_key():
     """
-    Middleware to check API Key in the request headers
+    Middleware to check API Key in the request headers.
     :return: JSON response if unauthorized
     """
     if request.endpoint != 'health' and request.endpoint != 'openai_completions':
@@ -41,8 +45,8 @@ def check_api_key():
 @app.route('/v1/completions', methods=['POST'])
 def openai_completions():
     """
-    Route to handle chat completions
-    :return: Response object
+    Route to handle chat completions with streaming response.
+    :return: Streaming response
     """
     try:
         data = request.json
@@ -57,6 +61,7 @@ def openai_completions():
         if model != 'gpt-3.5-turbo':
             return jsonify({"error": "Invalid model specified"}), 400
 
+        # Return the response stream
         return Response(chatgpt_response_stream(prompt), content_type='text/plain;charset=utf-8', status=200)
 
     except Exception as e:
@@ -66,7 +71,7 @@ def openai_completions():
 @app.route('/v1/health', methods=['GET'])
 def health_check():
     """
-    Health check endpoint
+    Health check endpoint.
     :return: JSON response
     """
     return jsonify({"status": "ok"}), 200
