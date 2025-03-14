@@ -7,9 +7,8 @@ import {Learning} from "@/pages/learning.tsx";
 export const TerraNumerIA = () => {
     return (
         <Router>
-            <div className="flex w-full h-full">
+            <div className="flex w-full h-screen overflow-hidden">
                 <SidePanelLeft/>
-                <div className="flex-1">
                     <Routes>
                         <Route path="/" element={<DialogBox/>}/>
                         <Route path="/learning" element={<Learning/>}/>
@@ -18,7 +17,6 @@ export const TerraNumerIA = () => {
                         <Route path="/mathematiques" element={<Learning/>}/>
                         <Route path="/espace-vectoriel" element={<Learning/>}/>
                     </Routes>
-                </div>
                 <SidePanelRight/>
             </div>
         </Router>

@@ -10,9 +10,9 @@ import {
 
 export const SidePanelLeft = () => {
     return (
-        <div className="flex flex-col h-screen w-1/6 shadow-xl">
+        <div className="flex flex-col h-screen w-1/6 shadow-xl pb-14">
             <Spacer y={4}/>
-            <Image alt="heroui logo" className="rounded-none" src="/logo.png"/>
+            <Image alt="heroui logo" src="/logo.png" className="rounded-none"/>
             <div className="flex flex-col justify-between h-full pr-5 pl-5 pb-20">
                 <Card className="rounded-none shadow-none">
                     <CardHeader className="flex gap-3 rounded-none">
@@ -22,50 +22,50 @@ export const SidePanelLeft = () => {
                         <ul className="flex flex-col">
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    isBlock
-                                    className="text-color-darkblue font-semibold text-xl h-12 ml-5"
-                                    color="undefined"
                                     href={"/learning"}
+                                    isBlock
+                                    color="undefined"
+                                    className="text-color-darkblue font-semibold text-xl h-12 ml-5"
                                 >
                                     L'entraînement
                                 </Link>
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    isBlock
-                                    className="text-color-darkblue font-semibold text-xl h-12 ml-5"
-                                    color="undefined"
                                     href="#"
+                                    isBlock
+                                    color="undefined"
+                                    className="text-color-darkblue font-semibold text-xl h-12 ml-5"
                                 >
                                     Les biais
                                 </Link>
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    isBlock
-                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
-                                    color="undefined"
                                     href="#"
+                                    isBlock
+                                    color="undefined"
+                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     La véracité
                                 </Link>
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    isBlock
-                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
-                                    color="undefined"
                                     href="#"
+                                    isBlock
+                                    color="undefined"
+                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     Les mathématiques
                                 </Link>
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    isBlock
-                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
-                                    color="undefined"
                                     href="#"
+                                    isBlock
+                                    color="undefined"
+                                    className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     L'espace vectoriel
                                 </Link>
@@ -78,6 +78,9 @@ export const SidePanelLeft = () => {
                     color="primary"
                     radius="none"
                     size="lg"
+                    onPress={() => {
+                        window.location.href = "/"
+                    }}
                 >
                     Nouvelle conversation
                 </Button>
