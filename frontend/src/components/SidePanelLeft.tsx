@@ -10,10 +10,10 @@ import {
 
 export const SidePanelLeft = () => {
   return (
-    <div className="flex flex-col h-screen w-1/6 shadow-xl">
+    <div className="flex flex-col h-screen w-1/6 shadow-xl pb-14">
       <Spacer y={4} />
       <Image alt="heroui logo" src="/logo.png" className="rounded-none" />
-      <div className="flex flex-col justify-between h-full pr-5 pl-5 pb-20">
+      <div className="flex flex-col justify-between h-full pr-5 pl-5">
         <Card className="rounded-none shadow-none">
           <CardHeader className="flex gap-3 rounded-none">
             <h1 className="text-3xl">Documentation</h1>
@@ -73,7 +73,12 @@ export const SidePanelLeft = () => {
             </ul>
           </CardBody>
         </Card>
-        <Button size="lg" radius="none" color ="primary" className="pr-5 pl-5 hover:bg-yellow  text-white font-semibold  text-lg">
+        <Button
+          className="pr-5 pl-5 hover:bg-yellow  text-white font-semibold  text-lg"
+          color="primary"
+          radius="none"
+          size="lg"
+        >
           Nouvelle conversation
         </Button>
       </div>

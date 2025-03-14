@@ -44,7 +44,7 @@ export const SidePanelRight = () => {
             <h2>Informations complémentaires</h2>
             <div>
               <Checkbox radius="none">Afficher les tokens</Checkbox>
-              <Checkbox radius="none" className={"mt-2"}>
+              <Checkbox className={"mt-2"} radius="none">
                 Afficher les autres possibilités
               </Checkbox>
             </div>
@@ -76,7 +76,13 @@ export const SidePanelRight = () => {
               />
             </div>
             <div className={"flex"}>
-              <Button className="w-1/2 mt-5 hover:bg-yellow" radius="none" color="primary">Token suivant</Button>
+              <Button
+                className="w-1/2 mt-5 hover:bg-yellow"
+                color="primary"
+                radius="none"
+              >
+                Token suivant
+              </Button>
             </div>
           </CardBody>
         </Card>

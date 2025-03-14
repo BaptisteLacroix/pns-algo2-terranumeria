@@ -4,7 +4,7 @@ import { DialogBox } from "@/components/DialogBox.tsx";
 
 export const TerraNumerIA = () => {
   return (
-    <div className="flex w-full h-full">
+    <div className="flex w-full h-screen overflow-hidden">
       <SidePanelLeft />
       <DialogBox />
       <SidePanelRight />
