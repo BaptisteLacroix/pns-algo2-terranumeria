@@ -24,7 +24,7 @@ export const SidePanelLeft = () => {
                                 <Link
                                     href={"/learning"}
                                     isBlock
-                                    color="undefined"
+                                    color={undefined}
                                     className="text-color-darkblue font-semibold text-xl h-12 ml-5"
                                 >
                                     L'entraînement
@@ -34,7 +34,7 @@ export const SidePanelLeft = () => {
                                 <Link
                                     href="#"
                                     isBlock
-                                    color="undefined"
+                                    color={undefined}
                                     className="text-color-darkblue font-semibold text-xl h-12 ml-5"
                                 >
                                     Les biais
@@ -44,7 +44,7 @@ export const SidePanelLeft = () => {
                                 <Link
                                     href="#"
                                     isBlock
-                                    color="undefined"
+                                    color={undefined}
                                     className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     La véracité
@@ -54,7 +54,7 @@ export const SidePanelLeft = () => {
                                 <Link
                                     href="#"
                                     isBlock
-                                    color="undefined"
+                                    color={undefined}
                                     className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     Les mathématiques
@@ -64,7 +64,7 @@ export const SidePanelLeft = () => {
                                 <Link
                                     href="#"
                                     isBlock
-                                    color="undefined"
+                                    color={undefined}
                                     className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"
                                 >
                                     L'espace vectoriel
