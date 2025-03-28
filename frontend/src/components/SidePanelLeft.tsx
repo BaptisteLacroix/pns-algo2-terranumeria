@@ -42,7 +42,7 @@ export const SidePanelLeft = () => {
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    href="#"
+                                    href="/truthfulness"
                                     isBlock
                                     color={undefined}
                                     className="text-color-darkblue font-semibold text-xl w-full h-12 ml-5"

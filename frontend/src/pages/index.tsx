@@ -4,6 +4,7 @@ import {SidePanelRight} from "@/components/SidePanelRight.tsx";
 import {DialogBox} from "@/components/DialogBox.tsx";
 import {Learning} from "@/pages/learning.tsx";
 import {Biasis} from "@/pages/biases.tsx";
+import { Truthfulness } from "./truthfulness";
 
 export const TerraNumerIA = () => {
     return (
@@ -14,7 +15,7 @@ export const TerraNumerIA = () => {
                         <Route path="/" element={<DialogBox/>}/>
                         <Route path="/learning" element={<Learning/>}/>
                         <Route path="/biasis" element={<Biasis/>}/>
-                        <Route path="/veracite" element={<Learning/>}/>
+                        <Route path="/truthfulness" element={<Truthfulness/>}/>
                         <Route path="/mathematiques" element={<Learning/>}/>
                         <Route path="/espace-vectoriel" element={<Learning/>}/>
                     </Routes>
