@@ -32,7 +32,7 @@ export const SidePanelLeft = () => {
                             </li>
                             <li className="hover:bg-yellow  w-full">
                                 <Link
-                                    href="#"
+                                    href="/biasis"
                                     isBlock
                                     color={undefined}
                                     className="text-color-darkblue font-semibold text-xl h-12 ml-5"
