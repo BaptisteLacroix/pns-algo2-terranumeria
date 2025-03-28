@@ -5,12 +5,13 @@ from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer
 
 from env import HF_TOKEN
+from env import CACHE_DIR
 
 
 class Model:
     MODELS = {
-        "mistral": "mistralai/Mistral-7B-v0.1",
-        "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+        "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
+        "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
     }
 
     def __init__(self, model_chosen):
@@ -19,6 +20,7 @@ class Model:
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
         self.tokenizer = None
+        self.login_hugging_face()
         self.ai_model = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
             print(f"✅ Model {self.model_name} loaded successfully")
@@ -43,7 +45,7 @@ class Model:
         # Load tokenizer and model (loading them globally for reuse)
         try:
             print(f"🔄 Loading tokenizer for {self.model_name}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=CACHE_DIR)
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
             print(f"🔄 Loading model {self.model_name}...")
@@ -58,7 +60,8 @@ class Model:
             return AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 device_map="auto",  # Automatically distribute model across available devices
-                quantization_config=quantization_config
+                quantization_config=quantization_config,
+                cache_dir=CACHE_DIR
             )
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")

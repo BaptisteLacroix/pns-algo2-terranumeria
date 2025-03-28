@@ -91,11 +91,13 @@ export const DialogBox = () => {
                         <Textarea
                             className="w-full h-20"
                             placeholder="Enter your message"
+                            radius="none"
+                            variant="flat"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={onEnterPress}
                         />
-                        <Button className="size-20 hover:bg-yellow" onPress={submitMessage}>
+                        <Button className="size-20 hover:bg-yellow" color="primary" radius="none" onPress={submitMessage}>
                             Envoyer
                         </Button>
                     </div>

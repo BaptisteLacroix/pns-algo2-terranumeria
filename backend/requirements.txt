@@ -1,4 +1,5 @@
-bitsandbytes
+setuptools
+bitsandbytes-cuda116
 torch
 torchvision
 torchaudio
