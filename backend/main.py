@@ -1,23 +1,31 @@
-import time
-
+import logging
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
 from env import API_KEY
 from model import Model
 
+# Set up logging
+logger = logging.getLogger("FlaskAppLogger")
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
 app = Flask(__name__)
 
 CORS(app)
 
-print("Loading models")
-print("Loading Mistral")
+logger.info("Loading models")
+logger.info("Loading Mistral")
 mistral_model = Model("mistral")
-print("Mistral loaded")
-print("Loading DeepSeek")
-deepseek_model = Model("deepseek")
-print("DeepSeek loaded")
-print("All models are load")
+logger.info("Mistral loaded")
+logger.info("Loading DeepSeek")
+# deepseek_model = Model("deepseek")
+logger.info("DeepSeek loaded")
+logger.info("All models are loaded")
 
 
 def chatgpt_response_stream(model, prompt):
@@ -27,23 +35,13 @@ def chatgpt_response_stream(model, prompt):
     :return: Generator for streaming response
     """
     try:
+        logger.info(f"Starting response generation for prompt: {prompt[:30]}...")  # Log the first part of the prompt
         for chunk in model.generate_response_stream(prompt):
-            print(f"Processing chunk: {chunk}")
+            logger.debug(f"Processing chunk: {chunk[:50]}...")  # Log the first part of the chunk for better tracking
             yield chunk
     except Exception as e:
+        logger.error(f"Error generating response: {str(e)}")
         yield f"Error generating response: {str(e)}"
-
-
-@app.before_request
-def check_api_key():
-    """
-    Middleware to check API Key in the request headers.
-    :return: JSON response if unauthorized
-    """
-    if request.endpoint != 'health' and request.endpoint != 'openai_completions':
-        api_key = request.headers.get('Authorization')
-        if not api_key or api_key != f"Bearer {API_KEY}":
-            return jsonify({"error": "Unauthorized"}), 401
 
 
 @app.route('/responses', methods=['POST'])
@@ -54,19 +52,27 @@ def openai_completions():
     """
     try:
         data = request.json
+        logger.info("Received request data: %s", data)
 
         # Validate the required data in the request
         prompt = data.get('prompt', '')
-        model = data.get('model', 'mistrail')
+        model = data.get('model', 'mistral')
+
+        logger.info(f"Received prompt: {prompt}")
 
         if not prompt:
+            logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
         if model == 'deepseek':
+            logger.info("Using DeepSeek model")
             return Response(chatgpt_response_stream(deepseek_model, prompt), content_type='text/plain;charset=utf-8', status=200)
+
+        logger.info("Using Mistral model")
         return Response(chatgpt_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
 
     except Exception as e:
+        logger.error(f"Error in openai_completions: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -75,10 +81,12 @@ def health_check():
     """
     Health check endpoint.
     """
+    logger.info("Health check request received")
     return jsonify({
         "status": "ok",
     }), 200
 
 
 if __name__ == '__main__':
+    logger.info("Starting Flask app")
     app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)

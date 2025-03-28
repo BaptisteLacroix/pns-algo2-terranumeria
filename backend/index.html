@@ -8,38 +8,41 @@
 <body>
 <h1>Streaming Data</h1>
 <pre id="response"></pre>
+<button id="sendRequest">Send Request</button>
 
 <script>
     const output = document.getElementById("response");
+    const sendRequestButton = document.getElementById("sendRequest");
 
     const promptData = {
         prompt: "How can I stream responses?",
-        model: "gpt-3.5-turbo"
+        model: "mistrail"
     };
 
-    fetch('http://127.0.0.1:5000/v1/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer your-api-key-here'  // Provide your actual API Key here
-        },
-        body: JSON.stringify(promptData)
-    })
-        .then(async response => {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let done, value;
-
-            // Reading the stream and appending it to the output
-            while (true) {
-                ({done, value} = await reader.read());
-                if (done) break;
-                output.textContent += decoder.decode(value, {stream: true});
-            }
+    sendRequestButton.addEventListener("click", () => {
+        fetch('http://127.0.0.1:5000/responses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(promptData)
         })
-        .catch(err => {
-            console.error('Stream error:', err);
-        });
+            .then(async response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let done, value;
+
+                // Reading the stream and appending it to the output
+                while (true) {
+                    ({done, value} = await reader.read());
+                    if (done) break;
+                    output.textContent += decoder.decode(value, {stream: true});
+                }
+            })
+            .catch(err => {
+                console.error('Stream error:', err);
+            });
+    });
 </script>
 </body>
 </html>
