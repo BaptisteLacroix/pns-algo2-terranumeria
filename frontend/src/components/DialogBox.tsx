@@ -5,11 +5,12 @@ type Message = {
     text: string;
     isUser: boolean;
 };
-
 export const DialogBox = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const preprompt = "";
+    // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
 
     const onEnterPress = (e: {
         keyCode: number;
@@ -24,7 +25,7 @@ export const DialogBox = () => {
 
     const submitMessage = async () => {
         if (message.trim() === "") return;
-
+        const enrichedMessage = preprompt + message;
         const userMessage: Message = { text: message, isUser: true };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setMessage("");
@@ -33,7 +34,10 @@ export const DialogBox = () => {
             const response = await fetch("http://127.0.0.1:5000/responses", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: userMessage.text, model: "mistral" }),
+                body: JSON.stringify({
+                    prompt: enrichedMessage,
+                    model: "mistral",
+                }),
             });
 
             if (!response.body) throw new Error("No response body");
@@ -46,19 +50,30 @@ export const DialogBox = () => {
                 const { done, value } = await reader.read();
                 if (done) break;
                 botMessage += decoder.decode(value, { stream: true });
+                botMessage = botMessage.replace(/<\/s>$/g, ""); // Remove </s> at the end of the message
                 setMessages((prevMessages) => {
                     const updatedMessages = [...prevMessages];
-                    if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
-                        updatedMessages[updatedMessages.length - 1].text = botMessage;
+                    if (
+                        updatedMessages.length > 0 &&
+                        !updatedMessages[updatedMessages.length - 1].isUser
+                    ) {
+                        updatedMessages[updatedMessages.length - 1].text =
+                            botMessage;
                     } else {
-                        updatedMessages.push({ text: botMessage, isUser: false });
+                        updatedMessages.push({
+                            text: botMessage,
+                            isUser: false,
+                        });
                     }
                     return [...updatedMessages];
                 });
             }
         } catch (error) {
             console.error("Stream error:", error);
-            setMessages((prevMessages) => [...prevMessages, { text: "Error fetching response.", isUser: false }]);
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { text: "Error fetching response.", isUser: false },
+            ]);
         }
     };
 
@@ -70,7 +85,7 @@ export const DialogBox = () => {
 
     return (
         <div className="flex flex-col w-2/3 justify-end content-around pt-4 pb-4 gap-2">
-            <ScrollShadow className="w-full h-full flex flex-col items-center pl-10 pr-10">
+            <ScrollShadow className="w-full h-full flex flex-col items-center pl-10 pr-10 gap-4">
                 {messages.map((msg, index) => (
                     <div
                         key={index}
@@ -97,7 +112,12 @@ export const DialogBox = () => {
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={onEnterPress}
                         />
-                        <Button className="size-20 hover:bg-yellow" color="primary" radius="none" onPress={submitMessage}>
+                        <Button
+                            className="size-20 hover:bg-yellow"
+                            color="primary"
+                            radius="none"
+                            onPress={submitMessage}
+                        >
                             Envoyer
                         </Button>
                     </div>
