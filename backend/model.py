@@ -1,4 +1,6 @@
 from threading import Thread
+import logging
+import json
 
 import torch
 from huggingface_hub import login
@@ -6,6 +8,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from env import HF_TOKEN
 from env import CACHE_DIR
+
+logger = logging.getLogger("FlaskAppLogger")
 
 
 class Model:
@@ -20,12 +24,16 @@ class Model:
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
         self.tokenizer = None
-        self.login_hugging_face()
+        # self.login_hugging_face()
         self.ai_model = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
+        self.chat_history = [{"role": "system",
+                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
+                                         "concise,en maintenant le contexte de la conversation."
+                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
 
     @staticmethod
     def login_hugging_face():
@@ -75,16 +83,19 @@ class Model:
             return
 
         try:
+            # format the prompt
+            formatted_prompt = self.format_prompt(prompt)
+
             # Prepare input
-            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            tokenized_inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
 
             # Setup streamer
             streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=10.0)
 
             # Create generation config
             generation_kwargs = dict(
-                inputs=inputs["input_ids"],
-                attention_mask=inputs["attention_mask"],
+                inputs=tokenized_inputs["input_ids"],
+                attention_mask=tokenized_inputs["attention_mask"],
                 max_new_tokens=512,
                 temperature=0.7,
                 top_p=0.95,
@@ -96,9 +107,35 @@ class Model:
             generation_thread = Thread(target=self.ai_model.generate, kwargs=generation_kwargs)
             generation_thread.start()
 
-            # Stream the response
+            response_text = ""
             for chunk in streamer:
+                response_text += chunk
                 yield chunk
+
+            # Ajout de la réponse du modèle dans l'historique
+            self.chat_history.append({"role": "assistant", "content": response_text})
 
         except Exception as e:
             yield f"Error generating response: {str(e)}"
+
+    def format_prompt(self, prompt):
+        """
+        Construit le prompt en intégrant l'historique sous la forme :
+        <|user|>
+        Question</s>
+        <|assistant|>
+        Réponse</s>
+        """
+        self.chat_history.append({"role": "user", "content": prompt})
+
+        # Construire le prompt formaté
+        formatted_prompt = ""
+        for entry in self.chat_history:
+            role_tag = "<|" + entry["role"] + "|>"
+            formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
+        formatted_prompt += "<|assistant|>\n"
+        return formatted_prompt
+
+    def reset_memory(self):
+        """Réinitialise l'historique de conversation."""
+        self.chat_history = []

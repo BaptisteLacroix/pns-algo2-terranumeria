@@ -2,7 +2,6 @@ import logging
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
-from env import API_KEY
 from model import Model
 
 # Set up logging
@@ -22,9 +21,9 @@ logger.info("Loading models")
 logger.info("Loading Mistral")
 mistral_model = Model("mistral")
 logger.info("Mistral loaded")
-logger.info("Loading DeepSeek")
+# logger.info("Loading DeepSeek")
 # deepseek_model = Model("deepseek")
-logger.info("DeepSeek loaded")
+# logger.info("DeepSeek loaded")
 logger.info("All models are loaded")
 
 
@@ -74,6 +73,15 @@ def openai_completions():
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/reset-memory', methods=['POST'])
+def reset_memory():
+    """
+    Réinitialise l'historique des conversations.
+    """
+    mistral_model.reset_memory()
+    # deepseek_model.reset_memory()
+    return jsonify({"message": "Mémoire de conversation réinitialisée"}), 200
 
 
 @app.route('/health', methods=['GET'])

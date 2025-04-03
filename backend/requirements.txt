@@ -1,8 +1,8 @@
 setuptools
 bitsandbytes-cuda116
-torch
-torchvision
-torchaudio
+torch  --find-links https://download.pytorch.org/whl/cu126
+torchvision --find-links https://download.pytorch.org/whl/cu126
+torchaudio --find-links https://download.pytorch.org/whl/cu126
 transformers
 accelerate
 huggingface_hub
