@@ -10,14 +10,13 @@ export const TerraNumerIA = () => {
             <div className="flex w-full h-screen overflow-hidden">
                 <SidePanelLeft/>
                     <Routes>
-                        <Route path="/" element={<DialogBox/>}/>
+                        <Route path="/" element={<><DialogBox/><SidePanelRight/></>}/>
                         <Route path="/learning" element={<Learning/>}/>
                         <Route path="/biais" element={<Learning/>}/>
                         <Route path="/veracite" element={<Learning/>}/>
                         <Route path="/mathematiques" element={<Learning/>}/>
                         <Route path="/espace-vectoriel" element={<Learning/>}/>
                     </Routes>
-                <SidePanelRight/>
             </div>
         </Router>
     );
