@@ -1,4 +1,4 @@
-import {useEffect, useState, useRef} from "react";
+import React, {useEffect, useState, useRef} from "react";
 import {
     Textarea,
     Button,
@@ -20,44 +20,74 @@ type Message = {
     isUser: boolean;
 };
 
-const TokenWithPopover = ({tokenData}: { tokenData: TokenData }) => {
+const TokenWithPopover = ({
+                              tokenData,
+                              showTokenBorders,
+                              showTokenPopovers,
+                          }: {
+    tokenData: TokenData;
+    showTokenBorders: boolean;
+    showTokenPopovers: boolean;
+}) => {
     const [isOpen, setIsOpen] = useState(false);
 
+    const handleClick = () => {
+        if (showTokenPopovers) {
+            setIsOpen(true);
+        }
+    };
+
     return (
-        <Popover isOpen={isOpen} onOpenChange={setIsOpen} className={'w-1/2'}>
+        <Popover isOpen={isOpen} onOpenChange={setIsOpen} className={"w-1/2"}>
             <PopoverTrigger>
-                <span className="cursor-pointer p-0.5 border-blue border-solid border-1" onClick={() => setIsOpen(true)}>
+                <span
+                    className={`cursor-pointer p-0.5 ${
+                        showTokenBorders ? "border-blue border-solid border-1" : ""
+                    }`}
+                    onClick={handleClick}
+                >
                     {tokenData.token}
                 </span>
             </PopoverTrigger>
-            <PopoverContent>
-                <div className="p-4">
-                    <h3 className="text-lg font-semibold">Token Probabilities</h3>
-                    <Table aria-label="Token Probabilities">
-                        <TableHeader>
-                            <TableColumn>Token</TableColumn>
-                            <TableColumn>Probability</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                            {tokenData.probabilities.map((prob, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>{prob.token}</TableCell>
-                                    <TableCell>{(prob.probability * 100).toFixed(2)}%</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <p className="mt-2 text-sm text-gray-600">
-                        The AI selects tokens based on probability distributions calculated from the
-                        context and training data. Higher probability tokens are more likely to be chosen.
-                    </p>
-                </div>
-            </PopoverContent>
+            {showTokenPopovers && (
+                <PopoverContent>
+                    <div className="p-4">
+                        <h3 className="text-lg font-semibold">Token Probabilities</h3>
+                        <Table aria-label="Token Probabilities">
+                            <TableHeader>
+                                <TableColumn>Token</TableColumn>
+                                <TableColumn>Probability</TableColumn>
+                            </TableHeader>
+                            <TableBody>
+                                {tokenData.probabilities.map((prob, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{prob.token}</TableCell>
+                                        <TableCell>{(prob.probability * 100).toFixed(2)}%</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <p className="mt-2 text-sm text-gray-600">
+                            The AI selects tokens based on probability distributions
+                            calculated from the context and training data. Higher probability
+                            tokens are more likely to be chosen.
+                        </p>
+                    </div>
+                </PopoverContent>
+            )}
         </Popover>
     );
 };
 
-export const DialogBox = () => {
+type DialogBoxProps = {
+    showTokenBorders: boolean;
+    showTokenPopovers: boolean;
+}
+
+export const DialogBox: React.FC<DialogBoxProps> = ({
+                                                        showTokenBorders,
+                                                        showTokenPopovers,
+                                                    }) => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -131,7 +161,7 @@ export const DialogBox = () => {
 
     useEffect(() => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+            messagesEndRef.current.scrollIntoView({behavior: "smooth"});
         }
     }, [messages]);
 
@@ -143,12 +173,17 @@ export const DialogBox = () => {
                         <div
                             className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
                             {msg.tokens.map((tokenData, idx) => (
-                                <TokenWithPopover key={idx} tokenData={tokenData}/>
+                                <TokenWithPopover
+                                    key={idx}
+                                    tokenData={tokenData}
+                                    showTokenBorders={showTokenBorders}
+                                    showTokenPopovers={showTokenPopovers}
+                                />
                             ))}
                         </div>
                     </div>
                 ))}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef}/>
             </ScrollShadow>
             <div className="w-full h-2/10 flex justify-center">
                 <div className="bottom-4 left-1/2 w-2/3">

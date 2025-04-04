@@ -21,8 +21,8 @@ CORS(app)
 
 logger.info("Loading models")
 logger.info("Loading Mistral")
-mistral_model = Model("mistral")
-# mistral_model = None
+# mistral_model = Model("mistral")
+mistral_model = None
 logger.info("Mistral loaded")
 # logger.info("Loading DeepSeek")
 # deepseek_model = Model("deepseek")
@@ -30,7 +30,7 @@ logger.info("Mistral loaded")
 logger.info("All models are loaded")
 
 
-def chatgpt_response_stream_mocked(prompt):
+def chatgpt_response_stream_mocked(_, prompt):
     """
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
@@ -61,6 +61,70 @@ def chatgpt_response_stream_mocked(prompt):
                     {"token": "everyone!", "probability": 0.03},
                     {"token": "folks!", "probability": 0.01},
                     {"token": "humans!", "probability": 0.01}
+                ]
+            },
+            {
+                "token": "This",
+                "probabilities": [
+                    {"token": "This", "probability": 0.7},
+                    {"token": "That", "probability": 0.2},
+                    {"token": "It", "probability": 0.1}
+                ]
+            },
+            {
+                "token": "is",
+                "probabilities": [
+                    {"token": "is", "probability": 0.85},
+                    {"token": "was", "probability": 0.1},
+                    {"token": "will be", "probability": 0.05}
+                ]
+            },
+            {
+                "token": "a",
+                "probabilities": [
+                    {"token": "a", "probability": 0.95},
+                    {"token": "an", "probability": 0.05}
+                ]
+            },
+            {
+                "token": "long",
+                "probabilities": [
+                    {"token": "long", "probability": 0.6},
+                    {"token": "extended", "probability": 0.2},
+                    {"token": "lengthy", "probability": 0.1},
+                    {"token": "prolonged", "probability": 0.1}
+                ]
+            },
+            {
+                "token": "sentence",
+                "probabilities": [
+                    {"token": "sentence", "probability": 0.75},
+                    {"token": "phrase", "probability": 0.15},
+                    {"token": "statement", "probability": 0.1}
+                ]
+            },
+            {
+                "token": "for",
+                "probabilities": [
+                    {"token": "for", "probability": 0.9},
+                    {"token": "to", "probability": 0.05},
+                    {"token": "in", "probability": 0.05}
+                ]
+            },
+            {
+                "token": "testing",
+                "probabilities": [
+                    {"token": "testing", "probability": 0.8},
+                    {"token": "examining", "probability": 0.1},
+                    {"token": "checking", "probability": 0.1}
+                ]
+            },
+            {
+                "token": "purposes.",
+                "probabilities": [
+                    {"token": "purposes.", "probability": 0.85},
+                    {"token": "reasons.", "probability": 0.1},
+                    {"token": "goals.", "probability": 0.05}
                 ]
             }
         ]
@@ -118,7 +182,7 @@ def openai_completions():
                             status=200)
 
         logger.info("Using Mistral model")
-        return Response(chatgpt_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8',
+        return Response(chatgpt_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8',
                         status=200)
 
     except Exception as e:
