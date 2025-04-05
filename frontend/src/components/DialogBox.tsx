@@ -5,6 +5,21 @@ type Message = {
     text: string;
     isUser: boolean;
 };
+
+// Créer une fonction pour réinitialiser la conversation qui peut être exportée
+export const resetConversation = async () => {
+    try {
+        await fetch("http://127.0.0.1:5000/reset-memory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+        return true;
+    } catch (error) {
+        console.error("Error resetting conversation:", error);
+        return false;
+    }
+};
+
 export const DialogBox = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
@@ -12,6 +27,17 @@ export const DialogBox = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const preprompt = "";
     // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
+
+    // Fonction pour réinitialiser les messages localement
+    const clearMessages = () => {
+        setMessages([]);
+    };
+
+    // Fonction pour réinitialiser complètement la conversation
+    const handleNewConversation = async () => {
+        await resetConversation();
+        clearMessages();
+    };
 
     const onEnterPress = (e: {
         keyCode: number;
