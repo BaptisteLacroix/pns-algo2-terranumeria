@@ -1,4 +1,4 @@
-import { Textarea, Button, ScrollShadow } from "@heroui/react";
+import { Textarea, Button, ScrollShadow, Spinner } from "@heroui/react";
 import { useEffect, useState, useRef } from "react";
 
 type Message = {
@@ -8,6 +8,7 @@ type Message = {
 export const DialogBox = () => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const preprompt = "";
     // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
@@ -29,6 +30,7 @@ export const DialogBox = () => {
         const userMessage: Message = { text: message, isUser: true };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setMessage("");
+        setIsLoading(true);
 
         try {
             const response = await fetch("http://127.0.0.1:5000/responses", {
@@ -74,6 +76,8 @@ export const DialogBox = () => {
                 ...prevMessages,
                 { text: "Error fetching response.", isUser: false },
             ]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -98,6 +102,14 @@ export const DialogBox = () => {
                         </div>
                     </div>
                 ))}
+                {isLoading && (
+                    <div className="flex w-full justify-start">
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-200">
+                            <Spinner size="sm" color="primary" />
+                            <span className="text-sm text-gray-600">Terra NumerIA réfléchit...</span>
+                        </div>
+                    </div>
+                )}
                 <div ref={messagesEndRef} />
             </ScrollShadow>
             <div className="w-full h-2/10 flex justify-center">
@@ -111,12 +123,15 @@ export const DialogBox = () => {
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={onEnterPress}
+                            isDisabled={isLoading}
                         />
                         <Button
                             className="size-20 hover:bg-yellow"
                             color="primary"
                             radius="none"
                             onPress={submitMessage}
+                            isDisabled={isLoading}
+                            isLoading={isLoading}
                         >
                             Envoyer
                         </Button>
