@@ -1,5 +1,10 @@
 import { Textarea, Button, ScrollShadow, Spinner } from "@heroui/react";
 import { useEffect, useState, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 type Message = {
     text: string;
@@ -27,17 +32,6 @@ export const DialogBox = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const preprompt = "";
     // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
-
-    // Fonction pour réinitialiser les messages localement
-    const clearMessages = () => {
-        setMessages([]);
-    };
-
-    // Fonction pour réinitialiser complètement la conversation
-    const handleNewConversation = async () => {
-        await resetConversation();
-        clearMessages();
-    };
 
     const onEnterPress = (e: {
         keyCode: number;
@@ -124,7 +118,18 @@ export const DialogBox = () => {
                         <div
                             className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}
                         >
-                            {msg.text}
+                            {msg.isUser ? (
+                                msg.text
+                            ) : (
+                                <div className="prose prose-sm max-w-none">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                        rehypePlugins={[rehypeRaw, rehypeKatex]}
+                                    >
+                                        {msg.text}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
