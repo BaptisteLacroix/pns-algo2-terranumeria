@@ -55,8 +55,7 @@ export const DialogBox = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    prompt: message,
-                    model: "mistral",
+                    prompt: message
                 }),
             });
 
