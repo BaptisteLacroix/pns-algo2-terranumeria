@@ -8,6 +8,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from env import HF_TOKEN
 from env import CACHE_DIR
+from conversation_manager import ConversationManager
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -34,6 +35,8 @@ class Model:
                               "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
                                          "concise,en maintenant le contexte de la conversation."
                                          "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+        self.conversation_manager = ConversationManager()
+        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
 
     @staticmethod
     def login_hugging_face():
@@ -114,6 +117,9 @@ class Model:
 
             # Ajout de la réponse du modèle dans l'historique
             self.chat_history.append({"role": "assistant", "content": response_text})
+            
+            # Sauvegarde de la conversation après chaque réponse
+            self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
 
         except Exception as e:
             yield f"Error generating response: {str(e)}"
@@ -139,3 +145,14 @@ class Model:
     def reset_memory(self):
         """Réinitialise l'historique de conversation."""
         self.chat_history = []
+        # Génère un nouveau ID de conversation
+        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+        
+    def load_conversation_history(self, conversation_id):
+        """Charge une conversation existante."""
+        conversation_data = self.conversation_manager.load_conversation(conversation_id)
+        if conversation_data:
+            self.chat_history = conversation_data.get("messages", [])
+            self.current_conversation_id = conversation_id
+            return True
+        return False

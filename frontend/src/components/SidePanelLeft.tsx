@@ -21,6 +21,17 @@ export const SidePanelLeft = () => {
             <Image alt="heroui logo" src="/logo.png" className="rounded-none cursor-pointer mx-auto mb-6" onClick={handleNewConversation}/>
             <div className="flex flex-col justify-between h-full px-4">
                 <div className="flex flex-col">
+                    <div className="flex flex-col mb-6">
+                        <Link
+                            href={"/history"}
+                            isBlock
+                            color={undefined}
+                            className="bg-gray-50 hover:bg-yellow rounded-md transition-colors text-darkblue font-semibold text-lg py-2 px-4 block mb-2"
+                        >
+                            Historique des conversations
+                        </Link>
+                    </div>
+                
                     <h1 className="text-2xl font-bold text-primary mb-4 px-2">Documentation</h1>
                     <div className="bg-gray-50 rounded-lg p-2">
                         <ul className="flex flex-col space-y-1">

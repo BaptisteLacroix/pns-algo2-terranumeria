@@ -3,6 +3,7 @@ import {SidePanelLeft} from "@/components/SidePanelLeft.tsx";
 import {SidePanelRight} from "@/components/SidePanelRight.tsx";
 import {DialogBox} from "@/components/DialogBox.tsx";
 import {Learning} from "@/pages/learning.tsx";
+import {History} from "@/pages/history.tsx";
 
 export const TerraNumerIA = () => {
     return (
@@ -11,6 +12,7 @@ export const TerraNumerIA = () => {
                 <SidePanelLeft/>
                     <Routes>
                         <Route path="/" element={<DialogBox/>}/>
+                        <Route path="/history" element={<History/>}/>
                         <Route path="/learning" element={<Learning/>}/>
                         <Route path="/biais" element={<Learning/>}/>
                         <Route path="/veracite" element={<Learning/>}/>
