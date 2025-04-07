@@ -8,9 +8,9 @@ import {
   Slider,
   Button,
 } from "@heroui/react";
-import { changeProfil } from "./services/BackendService";
 
-export const SidePanelRight = () => {
+export const SidePanelRight: React.FC<{ changeProfil: (profile: string) => void }> = ({ changeProfil }) => {
+
   return (
     <div className="flex flex-col overflow-y-auto h-screen w-1/6 shadow-xl">
       <div className="flex flex-col h-full">

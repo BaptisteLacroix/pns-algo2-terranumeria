@@ -1,22 +1,20 @@
 import {
-    Image,
-    Spacer,
-    Link,
-    Button,
-} from "@heroui/react";
-import { useEffect } from "react";
-import { getProfil, resetChat } from "../components/services/BackendService";
 
-export const SidePanelLeft = () => {
-    useEffect(() => {
-        resetChat(getProfil());
-    }, []);
+  Image,
+  Spacer,
+  Link,
+  Button,
+} from "@heroui/react";
+
+export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
+  callResetChat,
+}) => {
 
     return (
         <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
             <Spacer y={4}/>
             <Image alt="heroui logo" src="/logo.png" className="rounded-none cursor-pointer mx-auto mb-6" onClick={
-                        resetChat(getProfil());}/>
+                        callResetChat();}/>
             <div className="flex flex-col justify-between h-full px-4">
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-bold text-primary mb-4 px-2">Documentation</h1>
@@ -81,8 +79,7 @@ export const SidePanelLeft = () => {
                     radius="none"
                     size="lg"
                     onPress={() => {
-                        resetChat(getProfil());
-                        window.location.href = "/";
+            callResetChat();
                     }}
                 >
                     Nouvelle conversation
