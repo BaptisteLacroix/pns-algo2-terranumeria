@@ -5,36 +5,24 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { useLocation } from "react-router-dom";
+import {
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import {
+  getProfil,
+  resetWithProfil,
+} from "../components/services/BackendService";
 
 type Message = {
     text: string;
     isUser: boolean;
 };
-
-// Créer une fonction pour réinitialiser la conversation qui peut être exportée
-export const resetConversation = async () => {
-    try {
-        await fetch("http://127.0.0.1:5000/reset-memory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        });
-        return true;
-    } catch (error) {
-        console.error("Error resetting conversation:", error);
-        return false;
-    }
-};
-
-export const DialogBox = () => {
-    const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const location = useLocation();
-    const preprompt = "";
-    // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d'utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
+export const DialogBox = forwardRef((props, ref) => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
@@ -58,7 +46,7 @@ export const DialogBox = () => {
             setCurrentConversationId(conversationId);
             
             const convertedMessages: Message[] = [];
-            
+
             data.messages.forEach((msg: any) => {
                 if (msg.role !== "system") {
                     convertedMessages.push({
@@ -111,11 +99,11 @@ export const DialogBox = () => {
                 body: JSON.stringify(requestBody),
             });
 
-            if (!response.body) throw new Error("No response body");
+      if (!response.body) throw new Error("No response body");
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let botMessage = "";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let botMessage = "";
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -128,8 +116,7 @@ export const DialogBox = () => {
                         updatedMessages.length > 0 &&
                         !updatedMessages[updatedMessages.length - 1].isUser
                     ) {
-                        updatedMessages[updatedMessages.length - 1].text =
-                            botMessage;
+                        updatedMessages[updatedMessages.length - 1].text = botMessage;
                     } else {
                         updatedMessages.push({
                             text: botMessage,
@@ -214,21 +201,18 @@ export const DialogBox = () => {
                     <div className={"flex flex-row items-center gap-2"}>
                         <Textarea
                             className="w-full h-20"
-                            placeholder="Entrez votre message..."
+                            placeholder="Enter your message"
                             radius="none"
                             variant="flat"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={onEnterPress}
-                            isDisabled={isLoading}
+                            onKeyDown={submitMessageOnEnterPressed}
                         />
                         <Button
                             className="size-20 hover:bg-yellow"
                             color="primary"
                             radius="none"
                             onPress={submitMessage}
-                            isDisabled={isLoading}
-                            isLoading={isLoading}
                         >
                             Envoyer
                         </Button>
@@ -237,4 +221,4 @@ export const DialogBox = () => {
             </div>
         </div>
     );
-};
+});

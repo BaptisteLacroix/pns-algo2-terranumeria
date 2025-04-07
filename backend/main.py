@@ -22,17 +22,13 @@ logger.info("Loading models")
 logger.info("Loading Mistral")
 mistral_model = Model("mistral")
 logger.info("Mistral loaded")
-# logger.info("Loading DeepSeek")
-# deepseek_model = Model("deepseek")
-# logger.info("DeepSeek loaded")
 logger.info("All models are loaded")
 
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()
 
-def chatgpt_response_stream(model, prompt):
+def llm_response_stream(model, prompt):
     """
-    :param model: The model to use ('mistral' or 'deepseek')
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
     """
@@ -47,7 +43,7 @@ def chatgpt_response_stream(model, prompt):
 
 
 @app.route('/responses', methods=['POST'])
-def openai_completions():
+def llm_completions():
     """
     Route to handle chat completions with streaming response.
     :return: Streaming response
@@ -62,7 +58,7 @@ def openai_completions():
         conversation_id = data.get('conversation_id', None)
 
         logger.info(f"Received prompt: {prompt}")
-        
+
         # Si un ID de conversation est fourni, charge cette conversation
         if conversation_id:
             if model == 'mistral':
@@ -78,12 +74,9 @@ def openai_completions():
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
-        if model == 'deepseek':
-            logger.info("Using DeepSeek model")
-            return Response(chatgpt_response_stream(deepseek_model, prompt), content_type='text/plain;charset=utf-8', status=200)
-
         logger.info("Using Mistral model")
-        return Response(chatgpt_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
+        return Response(llm_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8',
+                        status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
