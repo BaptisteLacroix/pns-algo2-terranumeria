@@ -36,7 +36,6 @@ export const DialogBox = () => {
     const preprompt = "";
     // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d'utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
 
-    // Charge la conversation depuis l'URL si disponible
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         const conversationId = queryParams.get("conversation");
@@ -58,10 +57,8 @@ export const DialogBox = () => {
             const data = await response.json();
             setCurrentConversationId(conversationId);
             
-            // Convertir les messages du format backend vers le format frontend
             const convertedMessages: Message[] = [];
             
-            // Filtrer le message "system" si présent et commencer par les messages utilisateur/assistant
             data.messages.forEach((msg: any) => {
                 if (msg.role !== "system") {
                     convertedMessages.push({
@@ -104,7 +101,6 @@ export const DialogBox = () => {
                 model: "mistral"
             };
             
-            // Ajouter l'ID de conversation si disponible
             if (currentConversationId) {
                 requestBody.conversation_id = currentConversationId;
             }
@@ -144,7 +140,6 @@ export const DialogBox = () => {
                 });
             }
             
-            // À la première réponse d'une nouvelle conversation, obtenir et stocker l'ID
             if (!currentConversationId) {
                 const resetResponse = await fetch("http://127.0.0.1:5000/reset-memory", {
                     method: "GET",

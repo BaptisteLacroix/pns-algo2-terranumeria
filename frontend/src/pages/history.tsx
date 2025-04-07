@@ -29,10 +29,8 @@ export const History: React.FC = () => {
             
             const data = await response.json();
             
-            // Formater les dates
             const formattedConversations = data.conversations.map((conv: any) => ({
                 ...conv,
-                // Convertir le ISO timestamp en date lisible
                 date: new Date(conv.timestamp).toLocaleDateString('fr-FR', {
                     day: 'numeric',
                     month: 'long',
@@ -51,12 +49,11 @@ export const History: React.FC = () => {
     };
 
     const handleSelectConversation = (id: string) => {
-        // Redirection vers la page principale avec l'ID de conversation
         navigate(`/?conversation=${id}`);
     };
 
     const handleDeleteConversation = async (id: string, event: React.MouseEvent) => {
-        event.stopPropagation(); // Empêcher le clic de remonter jusqu'à la Card
+        event.stopPropagation();
         
         try {
             const response = await fetch(`http://127.0.0.1:5000/conversations/${id}`, {
@@ -67,7 +64,6 @@ export const History: React.FC = () => {
                 throw new Error(`Erreur lors de la suppression: ${response.status}`);
             }
             
-            // Rafraîchir la liste après suppression
             fetchConversations();
         } catch (err) {
             console.error("Erreur lors de la suppression:", err);
