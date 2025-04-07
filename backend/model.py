@@ -1,6 +1,8 @@
 from threading import Thread
 import logging
 import json
+import time
+import _queue
 
 import torch
 from huggingface_hub import login

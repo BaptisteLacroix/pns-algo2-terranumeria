@@ -10,7 +10,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
         alt="heroui logo"
         src="/logo.png"
         className="rounded-none cursor-pointer mx-auto mb-6"
-        onClick={callResetChat()}
+        onClick={() => callResetChat()}
       />
       <div className="flex flex-col justify-between h-full px-4">
         <div className="flex flex-col">
@@ -40,7 +40,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
               </li>
               <li className="hover:bg-yellow rounded-md transition-colors">
                 <Link
-                  href="#"
+                  href={"/biais"}
                   isBlock
                   color={undefined}
                   className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -50,7 +50,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
               </li>
               <li className="hover:bg-yellow rounded-md transition-colors">
                 <Link
-                  href="#"
+                  href={"/veracite"}
                   isBlock
                   color={undefined}
                   className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -60,7 +60,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
               </li>
               <li className="hover:bg-yellow rounded-md transition-colors">
                 <Link
-                  href="#"
+                  href={"/mathematiques"}
                   isBlock
                   color={undefined}
                   className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -70,7 +70,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
               </li>
               <li className="hover:bg-yellow rounded-md transition-colors">
                 <Link
-                  href="#"
+                  href={"/espace-vectoriel"}
                   isBlock
                   color={undefined}
                   className="text-darkblue font-semibold text-lg py-2 px-4 block"

@@ -3,6 +3,7 @@ import { SidePanelLeft } from "@/components/SidePanelLeft.tsx";
 import { SidePanelRight } from "@/components/SidePanelRight.tsx";
 import { DialogBox } from "@/components/DialogBox.tsx";
 import { Learning } from "@/pages/learning.tsx";
+import { History } from "@/pages/history.tsx";
 import {
   resetWithProfil,
   getProfil,
@@ -28,6 +29,7 @@ export const CommonParent = () => {
         <SidePanelLeft callResetChat={callResetChat} />
         <Routes>
           <Route path="/" element={<DialogBox ref={dialogRef}/>} />
+          <Route path="/history" element={<History />} />
           <Route path="/learning" element={<Learning />} />
           <Route path="/biais" element={<Learning />} />
           <Route path="/veracite" element={<Learning />} />

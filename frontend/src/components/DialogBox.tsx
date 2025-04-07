@@ -1,28 +1,24 @@
 import { Textarea, Button, ScrollShadow, Spinner } from "@heroui/react";
-import { useEffect, useState, useRef } from "react";
+import {useEffect, useState, useRef, forwardRef} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import {
-  forwardRef,
-  useImperativeHandle,
-} from "react";
-import {
-  getProfil,
-  resetWithProfil,
-} from "../components/services/BackendService";
+import { useLocation } from "react-router-dom";
 
 type Message = {
     text: string;
     isUser: boolean;
 };
-export const DialogBox = forwardRef((props, ref) => {
+export const DialogBox = forwardRef(() => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [preprompt] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
@@ -206,7 +202,7 @@ export const DialogBox = forwardRef((props, ref) => {
                             variant="flat"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={submitMessageOnEnterPressed}
+                            onKeyDown={onEnterPress}
                         />
                         <Button
                             className="size-20 hover:bg-yellow"
