@@ -5,37 +5,24 @@ import {
     Button,
 } from "@heroui/react";
 import { useEffect } from "react";
+import { getProfil, resetChat } from "../components/services/BackendService";
 
 export const SidePanelLeft = () => {
     useEffect(() => {
-        resetChat();
+        resetChat(getProfil());
     }, []);
-
-    const resetChat = async () => {
-        try {
-            const response = await fetch("http://127.0.0.1:5000/reset-memory", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log("Memory reset successfully.");
-        } catch (error) {
-        }
-    };
 
     return (
         <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
             <Spacer y={4}/>
-            <Image alt="heroui logo" src="/logo.png" className="rounded-none cursor-pointer mx-auto mb-6" onClick={handleNewConversation}/>
+            <Image alt="heroui logo" src="/logo.png" className="rounded-none cursor-pointer mx-auto mb-6" onClick={
+                        resetChat(getProfil());}/>
             <div className="flex flex-col justify-between h-full px-4">
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-bold text-primary mb-4 px-2">Documentation</h1>
-                    <div className="bg-gray-50 rounded-lg p-2">
+                    <div className="bg-gray-50 p-2">
                         <ul className="flex flex-col space-y-1">
-                            <li className="hover:bg-yellow rounded-md transition-colors">
+                            <li className="hover:bg-yellow transition-colors">
                                 <Link
                                     href={"/learning"}
                                     isBlock
@@ -94,8 +81,8 @@ export const SidePanelLeft = () => {
                     radius="none"
                     size="lg"
                     onPress={() => {
-                        resetChat();
-                        window.location.href = "/"
+                        resetChat(getProfil());
+                        window.location.href = "/";
                     }}
                 >
                     Nouvelle conversation
