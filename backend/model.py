@@ -16,7 +16,6 @@ logger = logging.getLogger("FlaskAppLogger")
 class Model:
     MODELS = {
         "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
-        "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
     }
 
     def __init__(self, model_chosen):
@@ -60,9 +59,9 @@ class Model:
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
             print(f"🔄 Loading model {self.model_name}...")
-            
+
             device_map = {"": 0}  # Map all modules to GPU 0 by default
-            
+
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
@@ -81,7 +80,7 @@ class Model:
                 offload_state_dict=True,   # Enable state dict offloading to save GPU memory
                 low_cpu_mem_usage=True     # Optimize CPU memory usage
             )
-            
+
             return model
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")
@@ -137,7 +136,7 @@ class Model:
 
             # Ajout de la réponse du modèle dans l'historique
             self.chat_history.append({"role": "assistant", "content": response_text})
-            
+
             # Sauvegarde de la conversation après chaque réponse
             self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
 
@@ -162,7 +161,7 @@ class Model:
         for entry in self.chat_history:
             role_tag = "<|" + entry["role"] + "|>"
             formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n"
+        formatted_prompt += "<|assistant|>\n" #TODO changer le nom assitant pour un meilleur role play
         return formatted_prompt
 
     def reset_memory(self):
@@ -170,7 +169,7 @@ class Model:
         self.chat_history = []
         # Génère un nouveau ID de conversation
         self.current_conversation_id = self.conversation_manager.generate_conversation_id()
-        
+
     def load_conversation_history(self, conversation_id):
         """Charge une conversation existante."""
         conversation_data = self.conversation_manager.load_conversation(conversation_id)
