@@ -1,13 +1,23 @@
 import React, {useEffect, useState, useRef} from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import {
     Textarea,
     Button,
+    Spinner,
     ScrollShadow,
     Popover,
     PopoverTrigger,
     PopoverContent,
     Table,
-    TableHeader, TableColumn, TableBody, TableRow, TableCell
+    TableHeader,
+    TableColumn,
+    TableBody,
+    TableRow,
+    TableCell
 } from "@heroui/react";
 
 type TokenData = {
@@ -82,21 +92,28 @@ const TokenWithPopover = ({
 type DialogBoxProps = {
     showTokenBorders: boolean;
     showTokenPopovers: boolean;
-}
+    resetDialog: boolean;
+};
 
 export const DialogBox: React.FC<DialogBoxProps> = ({
                                                         showTokenBorders,
                                                         showTokenPopovers,
+                                                        resetDialog,
                                                     }) => {
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const onEnterPress = (e: {
-        keyCode: number;
-        shiftKey: any;
-        preventDefault: () => void;
-    }) => {
+    useEffect(() => {
+        if (resetDialog) {
+            setMessages([]);
+            setMessage("");
+            setIsLoading(false);
+        }
+    }, [resetDialog]);
+
+    const onEnterPress = (e: { keyCode: number; shiftKey: any; preventDefault: () => void }) => {
         if (e.keyCode === 13 && !e.shiftKey) {
             e.preventDefault();
             submitMessage();
@@ -109,12 +126,13 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
         const userMessage: Message = {tokens: [{token: message, probabilities: []}], isUser: true};
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setMessage("");
+        setIsLoading(true);
 
         try {
             const response = await fetch("http://127.0.0.1:5000/responses", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({prompt: message, model: "mistral"}),
+                body: JSON.stringify({prompt: message}),
             });
 
             if (!response.body) throw new Error("No response body");
@@ -122,6 +140,8 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let botTokens: TokenData[] = [];
+
+            setIsLoading(false);
 
             while (true) {
                 const {done, value} = await reader.read();
@@ -150,12 +170,15 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
             }
         } catch (error) {
             console.error("Stream error:", error);
-            setMessages((prevMessages) => [...prevMessages, {
-                tokens: [{
-                    token: "Error fetching response.",
-                    probabilities: []
-                }], isUser: false
-            }]);
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                {
+                    tokens: [{token: "Error fetching response.", probabilities: []}],
+                    isUser: false,
+                },
+            ]);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -172,17 +195,38 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
                     <div key={index} className={`flex w-full ${msg.isUser ? "justify-end" : "justify-start"}`}>
                         <div
                             className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
-                            {msg.tokens.map((tokenData, idx) => (
-                                <TokenWithPopover
-                                    key={idx}
-                                    tokenData={tokenData}
-                                    showTokenBorders={showTokenBorders}
-                                    showTokenPopovers={showTokenPopovers}
-                                />
-                            ))}
+                            {!showTokenBorders && !showTokenPopovers ? (
+                                // Render only the complete Markdown text if available
+                                <div className="prose prose-sm max-w-none mt-2">
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm, remarkMath]}
+                                        rehypePlugins={[rehypeRaw, rehypeKatex]}
+                                    >
+                                        {msg.tokens.map((token) => token.token).join(" ")}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                // Otherwise, fall back to rendering token-by-token if msg.text is not present
+                                msg.tokens.map((tokenData, idx) => (
+                                    <TokenWithPopover
+                                        key={idx}
+                                        tokenData={tokenData}
+                                        showTokenBorders={showTokenBorders}
+                                        showTokenPopovers={showTokenPopovers}
+                                    />
+                                ))
+                            )}
                         </div>
                     </div>
                 ))}
+                {isLoading && (
+                    <div className="flex w-full justify-start">
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-200">
+                            <Spinner size="sm" color="primary"/>
+                            <span className="text-sm text-gray-600">Terra NumerIA réfléchit...</span>
+                        </div>
+                    </div>
+                )}
                 <div ref={messagesEndRef}/>
             </ScrollShadow>
             <div className="w-full h-2/10 flex justify-center">

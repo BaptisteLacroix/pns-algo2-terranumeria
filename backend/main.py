@@ -21,16 +21,13 @@ CORS(app)
 
 logger.info("Loading models")
 logger.info("Loading Mistral")
-# mistral_model = Model("mistral")
+#mistral_model = Model("mistral")
 mistral_model = None
 logger.info("Mistral loaded")
-# logger.info("Loading DeepSeek")
-# deepseek_model = Model("deepseek")
-# logger.info("DeepSeek loaded")
 logger.info("All models are loaded")
 
 
-def chatgpt_response_stream_mocked(_, prompt):
+def llm_response_stream_mocked(_, prompt):
     """
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
@@ -44,7 +41,7 @@ def chatgpt_response_stream_mocked(_, prompt):
         """
         mock_tokens = [
             {
-                "token": "Hello",
+                "token": "# Hello",
                 "probabilities": [
                     {"token": "Hello", "probability": 0.8},
                     {"token": "Hi", "probability": 0.1},
@@ -64,7 +61,7 @@ def chatgpt_response_stream_mocked(_, prompt):
                 ]
             },
             {
-                "token": "This",
+                "token": "*This*",
                 "probabilities": [
                     {"token": "This", "probability": 0.7},
                     {"token": "That", "probability": 0.2},
@@ -80,14 +77,14 @@ def chatgpt_response_stream_mocked(_, prompt):
                 ]
             },
             {
-                "token": "a",
+                "token": "_a_",
                 "probabilities": [
                     {"token": "a", "probability": 0.95},
                     {"token": "an", "probability": 0.05}
                 ]
             },
             {
-                "token": "long",
+                "token": "- long",
                 "probabilities": [
                     {"token": "long", "probability": 0.6},
                     {"token": "extended", "probability": 0.2},
@@ -96,7 +93,7 @@ def chatgpt_response_stream_mocked(_, prompt):
                 ]
             },
             {
-                "token": "sentence",
+                "token": "- sentence\n",
                 "probabilities": [
                     {"token": "sentence", "probability": 0.75},
                     {"token": "phrase", "probability": 0.15},
@@ -140,9 +137,9 @@ def chatgpt_response_stream_mocked(_, prompt):
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
 
-def chatgpt_response_stream(model, prompt):
+
+def llm_response_stream(model, prompt):
     """
-    :param model: The model to use ('mistral' or 'deepseek')
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
     """
@@ -157,7 +154,7 @@ def chatgpt_response_stream(model, prompt):
 
 
 @app.route('/responses', methods=['POST'])
-def openai_completions():
+def llm_completions():
     """
     Route to handle chat completions with streaming response.
     :return: Streaming response
@@ -168,7 +165,6 @@ def openai_completions():
 
         # Validate the required data in the request
         prompt = data.get('prompt', '')
-        model = data.get('model', 'mistral')
 
         logger.info(f"Received prompt: {prompt}")
 
@@ -176,13 +172,8 @@ def openai_completions():
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
-        if model == 'deepseek':
-            logger.info("Using DeepSeek model")
-            return Response(chatgpt_response_stream(deepseek_model, prompt), content_type='text/plain;charset=utf-8',
-                            status=200)
-
         logger.info("Using Mistral model")
-        return Response(chatgpt_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8',
+        return Response(llm_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8',
                         status=200)
 
     except Exception as e:
@@ -195,8 +186,12 @@ def reset_memory():
     """
     Réinitialise l'historique des conversations.
     """
-    mistral_model.reset_memory()
-    # deepseek_model.reset_memory()
+    logger.info("Resetting conversation memory")
+    data = request.json
+    logger.info("Received request data: %s", data)
+    profil = data.get('profil')
+    if mistral_model is not None:
+        mistral_model.reset_memory(profil)
     return jsonify({"message": "Mémoire de conversation réinitialisée"}), 200
 
 

@@ -5,7 +5,9 @@ import torch
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer
 
+from env import CACHE_DIR
 from env import HF_TOKEN
+from profiles import PROFILES
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -13,25 +15,22 @@ logger = logging.getLogger("FlaskAppLogger")
 class Model:
     MODELS = {
         "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
-        "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
     }
 
     def __init__(self, model_chosen):
         # Check if GPU is available
+        self.chat_history = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
         self.tokenizer = None
-        self.login_hugging_face()
+        # self.login_hugging_face()
         self.ai_model = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
-        self.chat_history = [{"role": "system",
-                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
-                                         "concise,en maintenant le contexte de la conversation."
-                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+        self.reset_memory()
 
     @staticmethod
     def login_hugging_face():
@@ -51,7 +50,7 @@ class Model:
         # Load tokenizer and model (loading them globally for reuse)
         try:
             print(f"🔄 Loading tokenizer for {self.model_name}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)  # , cache_dir=CACHE_DIR)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=CACHE_DIR)
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
             print(f"🔄 Loading model {self.model_name}...")
@@ -67,7 +66,7 @@ class Model:
                 self.model_name,
                 device_map="auto",  # Automatically distribute model across available devices
                 quantization_config=quantization_config,
-                # cache_dir=CACHE_DIR
+                cache_dir=CACHE_DIR
             )
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")
@@ -110,46 +109,6 @@ class Model:
                 response_text += chunk
                 yield chunk
 
-            # Prepare to track the probability details
-            top_k = 5
-
-            # Stream the response and calculate token probabilities
-            for i, chunk in enumerate(streamer):
-                print(f"Processing chunk {i + 1}: {chunk}...")
-                # Decode the chunk (tokens generated so far)
-                generated_tokens = self.tokenizer(chunk, return_tensors="pt").input_ids.squeeze()
-
-                for idx, token_id in enumerate(generated_tokens):
-                    # Softmax distribution for the current token
-                    prob_distribution = torch.softmax(self.ai_model(generated_tokens)[0], dim=-1)
-
-                    # Extract the probability for the chosen token
-                    token_prob = prob_distribution[0, token_id].item()
-                    token_name = self.tokenizer.convert_ids_to_tokens(token_id.item())
-
-                    # Get top-k predictions and their probabilities
-                    top_k_probs, top_k_ids = torch.topk(prob_distribution, top_k, dim=-1)
-                    top_k_tokens = self.tokenizer.convert_ids_to_tokens(top_k_ids[0])
-                    top_k_probs = top_k_probs[0].tolist()
-
-                    # Create a map of alternatives with their probabilities
-                    alternatives = {tok: prob for tok, prob in zip(top_k_tokens, top_k_probs)}
-
-                    # Yield the current token and the top-k alternatives with their probabilities
-                    print({
-                        "current_token": token_name,
-                        "probability": token_prob,
-                        "top_k_alternatives": alternatives
-                    })
-                    yield {
-                        "current_token": token_name,
-                        "probability": token_prob,
-                        "top_k_alternatives": alternatives
-                    }
-
-                # Optionally, you can add logic to display token details here as well
-                # For instance, show token details in the final stream or on certain intervals
-
             # Ajout de la réponse du modèle dans l'historique
             self.chat_history.append({"role": "assistant", "content": response_text})
 
@@ -171,9 +130,11 @@ class Model:
         for entry in self.chat_history:
             role_tag = "<|" + entry["role"] + "|>"
             formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n"
+        formatted_prompt += "<|assistant|>\n"  # TODO changer le nom assitant pour un meilleur role play
         return formatted_prompt
 
-    def reset_memory(self):
+    def reset_memory(self, profile_id='TNIA'):
         """Réinitialise l'historique de conversation."""
-        self.chat_history = []
+        self.chat_history = [{"role": "system",
+                              "content": PROFILES[profile_id]}]
+        logger.info("Conversation memory reset with profile: %s", profile_id)
