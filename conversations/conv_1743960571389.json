@@ -1,0 +1,18 @@
+{
+  "id": "conv_1743960571389",
+  "timestamp": "2025-04-06T19:31:15.833862",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et concise,en maintenant le contexte de la conversation.Ne jamais inclure la balise '<|user|>' dans tes propres réponses."
+    },
+    {
+      "role": "user",
+      "content": "salut ça va ?"
+    },
+    {
+      "role": "assistant",
+      "content": "Salut ! J'ai l'heure actuelle et j'ai des informations sur les météo et les cours d'études. Comment puis-je vous aider aujourd'hui ?</s>"
+    }
+  ]
+}

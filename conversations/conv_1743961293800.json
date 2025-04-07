@@ -1,0 +1,14 @@
+{
+  "id": "conv_1743961293800",
+  "timestamp": "2025-04-06T19:43:33.053958",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Comment tu vas?"
+    },
+    {
+      "role": "assistant",
+      "content": "Bonjour! Comment ça va?</s>"
+    }
+  ]
+}
