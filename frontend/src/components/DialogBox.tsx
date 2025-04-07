@@ -30,8 +30,7 @@ export const DialogBox = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const preprompt = "";
-    // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
+
 
     const onEnterPress = (e: {
         keyCode: number;
@@ -46,7 +45,6 @@ export const DialogBox = () => {
 
     const submitMessage = async () => {
         if (message.trim() === "") return;
-        const enrichedMessage = preprompt + message;
         const userMessage: Message = { text: message, isUser: true };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setMessage("");
@@ -57,7 +55,7 @@ export const DialogBox = () => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    prompt: enrichedMessage,
+                    prompt: message,
                     model: "mistral",
                 }),
             });

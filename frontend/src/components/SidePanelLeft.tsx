@@ -4,15 +4,26 @@ import {
     Link,
     Button,
 } from "@heroui/react";
+import { useEffect } from "react";
 
 export const SidePanelLeft = () => {
-    const handleNewConversation = () => {
-        fetch("http://127.0.0.1:5000/reset-memory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        }).catch(err => console.error("Erreur lors de la réinitialisation:", err));
-        
-        window.location.href = "/";
+    useEffect(() => {
+        resetChat();
+    }, []);
+
+    const resetChat = async () => {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/reset-memory", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log("Memory reset successfully.");
+        } catch (error) {
+        }
     };
 
     return (
@@ -77,16 +88,18 @@ export const SidePanelLeft = () => {
                         </ul>
                     </div>
                 </div>
-                <div className="mt-auto px-2">
-                    <Button
-                        className="w-full py-3 px-6 bg-primary hover:bg-yellow text-white font-semibold text-lg shadow-md transition-colors"
-                        radius="none"
-                        size="lg"
-                        onPress={handleNewConversation}
-                    >
-                        Nouvelle conversation
-                    </Button>
-                </div>
+                <Button
+                    className="pr-5 pl-5 hover:bg-yellow  text-white font-semibold  text-lg"
+                    color="primary"
+                    radius="none"
+                    size="lg"
+                    onPress={() => {
+                        resetChat();
+                        window.location.href = "/"
+                    }}
+                >
+                    Nouvelle conversation
+                </Button>
             </div>
         </div>
     );
