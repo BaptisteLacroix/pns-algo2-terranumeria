@@ -9,7 +9,8 @@ import {
   Button,
 } from "@heroui/react";
 
-export const SidePanelRight = () => {
+export const SidePanelRight: React.FC<{ changeProfil: (profile: string) => void }> = ({ changeProfil }) => {
+
   return (
     <div className="flex flex-col overflow-y-auto h-screen w-1/6 shadow-xl">
       <div className="flex flex-col h-full">
@@ -19,26 +20,47 @@ export const SidePanelRight = () => {
           </CardHeader>
           <CardBody>
             <h2>Choix de la personnalité</h2>
-            <div className={"flex flex-col items-start space-y-4"}>
-              {/* Add space-y-4 for margin between users */}
-              <User
-                avatarProps={{
-                  src: "#",
+            <div className={"flex flex-col items-start w-full"}>
+              <div
+                className="w-full hover:bg-yellow cursor-pointer p-1"
+                onClick={() => {
+                  changeProfil("TNIA");
                 }}
-                name="Terra NumerIA"
-              />
-              <User
-                avatarProps={{
-                  src: "#",
+              >
+                <User
+                  avatarProps={{
+                    src: "/round-logo.png",
+                  }}
+                  name="Terra NumerIA"
+                />
+              </div>
+              <div
+                className="w-full hover:bg-yellow cursor-pointer p-1"
+                onClick={() => {
+                  changeProfil("PRT");
                 }}
-                name="Profil 2"
-              />
-              <User
-                avatarProps={{
-                  src: "#",
+              >
+                <User
+                  avatarProps={{
+                    src: "/round-jack.png",
+                    className: "bg-yellow",
+                  }}
+                  name="Jack le pirate"
+                />
+              </div>
+              <div
+                className="w-full hover:bg-yellow cursor-pointer p-1"
+                onClick={() => {
+                  changeProfil("SVF");
                 }}
-                name="Profil 3"
-              />
+              >
+                <User
+                  avatarProps={{
+                    src: "/victor-round.png",
+                  }}
+                  name="Savant fou"
+                />
+              </div>
             </div>
             <Divider className={"mt-5 mb-5"} />
             <h2>Informations complémentaires</h2>

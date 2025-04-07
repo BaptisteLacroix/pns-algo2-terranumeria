@@ -5,68 +5,70 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import {
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import {
+  getProfil,
+  resetWithProfil,
+} from "../components/services/BackendService";
 
 type Message = {
     text: string;
     isUser: boolean;
 };
+export const DialogBox = forwardRef((props, ref) => {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-// Créer une fonction pour réinitialiser la conversation qui peut être exportée
-export const resetConversation = async () => {
-    try {
-        await fetch("http://127.0.0.1:5000/reset-memory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        });
-        return true;
-    } catch (error) {
-        console.error("Error resetting conversation:", error);
-        return false;
+  useEffect(() => {
+    resetWithProfil(getProfil());
+  }, []);
+
+  const submitMessageOnEnterPressed = (e: {
+    keyCode: number;
+    shiftKey: any;
+    preventDefault: () => void;
+  }) => {
+    if (e.keyCode === 13 && !e.shiftKey) {
+      e.preventDefault();
+      submitMessage();
     }
-};
+  };
 
-export const DialogBox = () => {
-    const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const preprompt = "";
-    // "Tu es un assistant conversationnel francophone. Tu t'appelles Terra NumerIA. Réponds toujours en français, de manière naturelle et fluide. Ne commence jamais ta réponse par 'Answer:' ni ne termine par '<s>'. Évite d’utiliser des marqueurs de fin de séquence non nécessaires. Réponds de manière complète et adaptée au contexte de la conversation lorsqu'on te pose une question. La conversation commence maintenant.\n\n";
+  useImperativeHandle(ref, () => ({
+    resetChatComponent,
+  }));
 
-    const onEnterPress = (e: {
-        keyCode: number;
-        shiftKey: any;
-        preventDefault: () => void;
-    }) => {
-        if (e.keyCode === 13 && !e.shiftKey) {
-            e.preventDefault();
-            submitMessage();
-        }
-    };
+  const resetChatComponent = () => {
+    setMessages([]);
+    setMessage("");
+  };
 
-    const submitMessage = async () => {
-        if (message.trim() === "") return;
-        const enrichedMessage = preprompt + message;
-        const userMessage: Message = { text: message, isUser: true };
-        setMessages((prevMessages) => [...prevMessages, userMessage]);
-        setMessage("");
+  const submitMessage = async () => {
+    if (message.trim() === "") return;
+    const userMessage: Message = { text: message, isUser: true };
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setMessage("");
         setIsLoading(true);
 
-        try {
-            const response = await fetch("http://127.0.0.1:5000/responses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    prompt: enrichedMessage,
-                    model: "mistral",
-                }),
-            });
+    try {
+      const response = await fetch("http://127.0.0.1:5000/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: message,
+        }),
+      });
 
-            if (!response.body) throw new Error("No response body");
+      if (!response.body) throw new Error("No response body");
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let botMessage = "";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let botMessage = "";
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -79,8 +81,7 @@ export const DialogBox = () => {
                         updatedMessages.length > 0 &&
                         !updatedMessages[updatedMessages.length - 1].isUser
                     ) {
-                        updatedMessages[updatedMessages.length - 1].text =
-                            botMessage;
+                        updatedMessages[updatedMessages.length - 1].text = botMessage;
                     } else {
                         updatedMessages.push({
                             text: botMessage,
@@ -153,16 +154,13 @@ export const DialogBox = () => {
                             variant="flat"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={onEnterPress}
-                            isDisabled={isLoading}
+                            onKeyDown={submitMessageOnEnterPressed}
                         />
                         <Button
                             className="size-20 hover:bg-yellow"
                             color="primary"
                             radius="none"
                             onPress={submitMessage}
-                            isDisabled={isLoading}
-                            isLoading={isLoading}
                         >
                             Envoyer
                         </Button>
@@ -171,4 +169,4 @@ export const DialogBox = () => {
             </div>
         </div>
     );
-};
+});

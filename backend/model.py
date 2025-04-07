@@ -8,6 +8,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from env import HF_TOKEN
 from env import CACHE_DIR
+from profiles import PROFILES
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -15,11 +16,11 @@ logger = logging.getLogger("FlaskAppLogger")
 class Model:
     MODELS = {
         "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
-        "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
     }
 
     def __init__(self, model_chosen):
         # Check if GPU is available
+        self.chat_history = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
@@ -30,10 +31,7 @@ class Model:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
-        self.chat_history = [{"role": "system",
-                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
-                                         "concise,en maintenant le contexte de la conversation."
-                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+        self.reset_memory()
 
     @staticmethod
     def login_hugging_face():
@@ -133,9 +131,11 @@ class Model:
         for entry in self.chat_history:
             role_tag = "<|" + entry["role"] + "|>"
             formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n"
+        formatted_prompt += "<|assistant|>\n" #TODO changer le nom assitant pour un meilleur role play
         return formatted_prompt
 
-    def reset_memory(self):
+    def reset_memory(self,profile_id='TNIA'):
         """Réinitialise l'historique de conversation."""
-        self.chat_history = []
+        self.chat_history = [{"role": "system",
+                              "content": PROFILES[profile_id]}]
+        logger.info("Conversation memory reset with profile: %s", profile_id)
