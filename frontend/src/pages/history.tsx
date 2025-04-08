@@ -108,7 +108,7 @@ export const History: React.FC = () => {
                             <CardBody className="p-4 cursor-pointer" onClick={() => handleSelectConversation(conv.id)}>
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-sm text-gray-500">{conv.date}</p>
+                                        <p className="text-sm text-gray-500">{conv.timestamp}</p>
                                         <p className="text-lg font-medium mt-1">{conv.preview || "Nouvelle conversation"}</p>
                                     </div>
                                     <div className="flex gap-2">
