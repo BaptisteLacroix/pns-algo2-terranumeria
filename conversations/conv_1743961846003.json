@@ -1,0 +1,14 @@
+{
+  "id": "conv_1743961846003",
+  "timestamp": "2025-04-06T19:53:58.025868",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Salut peut tu m'expliquer ce qu'est qu'un cumulonimbus ?"
+    },
+    {
+      "role": "assistant",
+      "content": "Certainement ! Un cumulonimbus est un type de nuage qui est généralement haut de 10 000 à 15 000 pieds et est caractérisé par sa forme imposante, avec des nuages qui ressemblent à des pyramides ou à des anges. Ils sont souvent associés aux tempêtes et à la pluie forte. Ils sont formés par la même mécanisme de formation de nuages que les nuages stratocumulus, mais avec des conditions plus favorables pour la formation de nuages élevés et plus denses. Un cumulonimbus peut être composé d'une seule nuage, de plusieurs nuages, ou d'un ensemble de nuages qui se connectent entre eux.</s>"
+    }
+  ]
+}

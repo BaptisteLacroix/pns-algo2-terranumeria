@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -19,6 +19,7 @@ import {
     TableRow,
     TableCell
 } from "@heroui/react";
+import { useLocation } from "react-router-dom";
 
 type TokenData = {
     token: string;
@@ -103,17 +104,55 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
 
     useEffect(() => {
-        if (resetDialog) {
-            setMessages([]);
-            setMessage("");
+        const queryParams = new URLSearchParams(location.search);
+        const conversationId = queryParams.get("conversation");
+
+        if (conversationId) {
+            loadConversation(conversationId);
+        }
+    }, [location.search]);
+
+    const loadConversation = async (conversationId: string) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`http://127.0.0.1:5000/conversations/${conversationId}`);
+
+            if (!response.ok) {
+                throw new Error("Impossible de charger cette conversation");
+            }
+
+            const data = await response.json();
+            setCurrentConversationId(conversationId);
+
+            const convertedMessages: Message[] = [];
+
+            data.messages.forEach((msg: any) => {
+                if (msg.role !== "system") {
+                    convertedMessages.push({
+                        tokens: [{token: msg.content, probabilities: []}],
+                        isUser: msg.role === "user"
+                    });
+                }
+            });
+
+            setMessages(convertedMessages);
+        } catch (error) {
+            console.error("Erreur lors du chargement de la conversation:", error);
+        } finally {
             setIsLoading(false);
         }
-    }, [resetDialog]);
+    };
 
-    const onEnterPress = (e: { keyCode: number; shiftKey: any; preventDefault: () => void }) => {
+    const onEnterPress = (e: {
+        keyCode: number;
+        shiftKey: any;
+        preventDefault: () => void;
+    }) => {
         if (e.keyCode === 13 && !e.shiftKey) {
             e.preventDefault();
             submitMessage();
@@ -129,10 +168,19 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
         setIsLoading(true);
 
         try {
+            const requestBody: Record<string, any> = {
+                prompt: message, // Utilisation de message au lieu de enrichedMessage
+                model: "mistral"
+            };
+
+            if (currentConversationId) {
+                requestBody.conversation_id = currentConversationId;
+            }
+
             const response = await fetch("http://127.0.0.1:5000/responses", {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({prompt: message}),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
             });
 
             if (!response.body) throw new Error("No response body");
@@ -168,6 +216,16 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
                     }
                 });
             }
+
+            if (!currentConversationId) {
+                const resetResponse = await fetch("http://127.0.0.1:5000/reset-memory", {
+                    method: "GET",
+                });
+                if (resetResponse.ok) {
+                    const data = await resetResponse.json();
+                    setCurrentConversationId(data.conversation_id);
+                }
+            }
         } catch (error) {
             console.error("Stream error:", error);
             setMessages((prevMessages) => [
@@ -190,6 +248,13 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
 
     return (
         <div className="flex flex-col w-2/3 justify-end content-around pt-4 pb-4 gap-2">
+            {currentConversationId && (
+                <div className="px-10 mb-2">
+                    <div className="bg-blue-50 text-blue-700 py-2 px-3 rounded-md text-sm">
+                        Conversation en cours: {currentConversationId}
+                    </div>
+                </div>
+            )}
             <ScrollShadow className="w-full h-full flex flex-col items-center pl-10 pr-10 gap-4">
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex w-full ${msg.isUser ? "justify-end" : "justify-start"}`}>

@@ -3,12 +3,13 @@ import {SidePanelLeft} from "@/components/SidePanelLeft.tsx";
 import {SidePanelRight} from "@/components/SidePanelRight.tsx";
 import {DialogBox} from "@/components/DialogBox.tsx";
 import {Learning} from "@/pages/learning.tsx";
+import { History } from "@/pages/history.tsx";
+
 import {
     resetWithProfil,
     getProfil,
 } from "../components/services/BackendService.ts";
 import {useState} from "react";
-import {History} from "@/pages/history.tsx";
 
 export const CommonParent = () => {
     const [showTokenBorders, setShowTokenBorders] = useState(false);

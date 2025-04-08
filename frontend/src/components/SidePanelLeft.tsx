@@ -1,20 +1,25 @@
 import {Image, Spacer, Link, Button} from "@heroui/react";
 
 export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
-                                                                           callResetChat,
-                                                                       }) => {
-    return (
-        <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
-            <Spacer y={4}/>
-            <Image
-                alt="heroui logo"
-                src="/logo.png"
-                className="rounded-none cursor-pointer mx-auto mb-6"
-                onClick={() => callResetChat()}
-            />
-            <div className="flex flex-col justify-between h-full px-4">
-                <div className="flex flex-col">
-                    <div className="flex flex-col mb-6">
+  callResetChat,
+}) => {
+  return (
+    <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
+      <Spacer y={4} />
+      <Image
+        alt="heroui logo"
+        src="/logo.png"
+        className="rounded-none cursor-pointer mx-auto mb-6"
+        onClick={() => {
+            callResetChat();
+            // Change the Route to /
+            window.location.href = "/";
+        }}
+
+      />
+      <div className="flex flex-col justify-between h-full px-4">
+        <div className="flex flex-col">
+            <div className="flex flex-col mb-6">
                         <Link
                             href={"/history"}
                             isBlock

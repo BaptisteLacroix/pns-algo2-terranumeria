@@ -1,6 +1,7 @@
 import { Card, CardBody, Button } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../styles/globals.css";
 
 type Conversation = {
     id: string;
@@ -29,10 +30,8 @@ export const History: React.FC = () => {
             
             const data = await response.json();
             
-            // Formater les dates
             const formattedConversations = data.conversations.map((conv: any) => ({
                 ...conv,
-                // Convertir le ISO timestamp en date lisible
                 date: new Date(conv.timestamp).toLocaleDateString('fr-FR', {
                     day: 'numeric',
                     month: 'long',
@@ -51,12 +50,11 @@ export const History: React.FC = () => {
     };
 
     const handleSelectConversation = (id: string) => {
-        // Redirection vers la page principale avec l'ID de conversation
         navigate(`/?conversation=${id}`);
     };
 
     const handleDeleteConversation = async (id: string, event: React.MouseEvent) => {
-        event.stopPropagation(); // Empêcher le clic de remonter jusqu'à la Card
+        event.stopPropagation();
         
         try {
             const response = await fetch(`http://127.0.0.1:5000/conversations/${id}`, {
@@ -67,7 +65,6 @@ export const History: React.FC = () => {
                 throw new Error(`Erreur lors de la suppression: ${response.status}`);
             }
             
-            // Rafraîchir la liste après suppression
             fetchConversations();
         } catch (err) {
             console.error("Erreur lors de la suppression:", err);
@@ -76,12 +73,12 @@ export const History: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="w-2/3 p-6">Chargement de l'historique...</div>;
+        return <div className="flex-grow p-6">Chargement de l'historique...</div>;
     }
 
     if (error) {
         return (
-            <div className="w-2/3 p-6">
+            <div className="flex-grow p-6">
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                     {error}
                 </div>
@@ -97,7 +94,7 @@ export const History: React.FC = () => {
     }
 
     return (
-        <div className="w-2/3 p-6">
+        <div className="flex-grow overflow-y-auto p-6">
             <h1 className="text-3xl font-bold mb-6">Historique des conversations</h1>
             
             {conversations.length === 0 ? (
