@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, Response, json
 from flask_cors import CORS
 
 from model import Model
+from conversation_manager import ConversationManager
 
 # Set up logging
 logger = logging.getLogger("FlaskAppLogger")
@@ -21,11 +22,13 @@ CORS(app)
 
 logger.info("Loading models")
 logger.info("Loading Mistral")
-#mistral_model = Model("mistral")
-mistral_model = None
+mistral_model = Model("mistral")
+#mistral_model = None
 logger.info("Mistral loaded")
 logger.info("All models are loaded")
 
+# Initialisation du gestionnaire de conversations
+conversation_manager = ConversationManager()
 
 def llm_response_stream_mocked(_, prompt):
     """
@@ -165,19 +168,71 @@ def llm_completions():
 
         # Validate the required data in the request
         prompt = data.get('prompt', '')
+        model = data.get('model', 'mistral')
+        conversation_id = data.get('conversation_id', None)
 
         logger.info(f"Received prompt: {prompt}")
+
+        # Si un ID de conversation est fourni, charge cette conversation
+        if conversation_id:
+            success = mistral_model.load_conversation_history(conversation_id)
+            if not success:
+                return jsonify({"error": "Conversation not found"}), 404
 
         if not prompt:
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8',
+        return Response(llm_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8',
                         status=200)
+        # return Response(llm_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/conversations', methods=['GET'])
+def get_conversations():
+    """
+    Récupère toutes les conversations sauvegardées.
+    """
+    try:
+        conversations = conversation_manager.get_all_conversations()
+        return jsonify({"conversations": conversations}), 200
+    except Exception as e:
+        logger.error(f"Error getting conversations: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/conversations/<conversation_id>', methods=['GET'])
+def get_conversation(conversation_id):
+    """
+    Récupère une conversation spécifique.
+    """
+    try:
+        conversation = conversation_manager.load_conversation(conversation_id)
+        if conversation:
+            return jsonify(conversation), 200
+        return jsonify({"error": "Conversation not found"}), 404
+    except Exception as e:
+        logger.error(f"Error getting conversation: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/conversations/<conversation_id>', methods=['DELETE'])
+def delete_conversation(conversation_id):
+    """
+    Supprime une conversation.
+    """
+    try:
+        success = conversation_manager.delete_conversation(conversation_id)
+        if success:
+            return jsonify({"message": "Conversation deleted successfully"}), 200
+        return jsonify({"error": "Conversation not found"}), 404
+    except Exception as e:
+        logger.error(f"Error deleting conversation: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -186,13 +241,15 @@ def reset_memory():
     """
     Réinitialise l'historique des conversations.
     """
-    logger.info("Resetting conversation memory")
-    data = request.json
-    logger.info("Received request data: %s", data)
-    profil = data.get('profil')
-    if mistral_model is not None:
-        mistral_model.reset_memory(profil)
-    return jsonify({"message": "Mémoire de conversation réinitialisée"}), 200
+    try:
+        mistral_model.reset_memory()
+        return jsonify({
+            "message": "Mémoire de conversation réinitialisée",
+            "conversation_id": mistral_model.current_conversation_id
+        }), 200
+    except Exception as e:
+        logger.error(f"Error resetting memory: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/health', methods=['GET'])

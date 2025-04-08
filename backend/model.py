@@ -1,13 +1,13 @@
-import logging
 from threading import Thread
-
+import logging
+import time
 import torch
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer
 
-from env import CACHE_DIR
 from env import HF_TOKEN
-from profiles import PROFILES
+from env import CACHE_DIR
+from conversation_manager import ConversationManager
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -19,7 +19,6 @@ class Model:
 
     def __init__(self, model_chosen):
         # Check if GPU is available
-        self.chat_history = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
@@ -30,7 +29,12 @@ class Model:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
-        self.reset_memory()
+        self.chat_history = [{"role": "system",
+                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
+                                         "concise,en maintenant le contexte de la conversation."
+                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+        self.conversation_manager = ConversationManager()
+        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
 
     @staticmethod
     def login_hugging_face():
@@ -54,20 +58,29 @@ class Model:
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
             print(f"🔄 Loading model {self.model_name}...")
+
+            device_map = {"": 0}  # Map all modules to GPU 0 by default
+
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=True,
+                bnb_4bit_use_double_quant=False,
                 bnb_4bit_quant_type="nf4",
-                llm_int8_enable_fp32_cpu_offload=True  # Enable CPU offloading
+                llm_int8_enable_fp32_cpu_offload=True  # Enable CPU offloading for modules that don't fit in GPU
             )
 
-            return AutoModelForCausalLM.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                device_map="auto",  # Automatically distribute model across available devices
+                device_map=device_map,  # Use custom device map
                 quantization_config=quantization_config,
-                cache_dir=CACHE_DIR
+                torch_dtype=torch.float16,
+                cache_dir=CACHE_DIR,
+                offload_folder="offload",  # Specify a folder for disk offloading
+                offload_state_dict=True,   # Enable state dict offloading to save GPU memory
+                low_cpu_mem_usage=True     # Optimize CPU memory usage
             )
+
+            return model
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")
 
@@ -102,17 +115,34 @@ class Model:
 
             # Start generation in a separate thread
             generation_thread = Thread(target=self.ai_model.generate, kwargs=generation_kwargs)
+            generation_thread.daemon = True  # Make the thread daemon so it doesn't block process exit
             generation_thread.start()
 
+            # Wait for generation to actually start before yielding
+            time.sleep(0.5)
+
             response_text = ""
-            for chunk in streamer:
-                response_text += chunk
-                yield chunk
+            try:
+                for chunk in streamer:
+                    response_text += chunk
+                    yield chunk
+            except _queue.Empty:
+                logger.warning("Streamer queue empty, generation may have stalled")
+                if response_text:
+                    yield "\n\n[Generation timed out, but partial response retrieved]"
+                else:
+                    yield "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer."
 
             # Ajout de la réponse du modèle dans l'historique
             self.chat_history.append({"role": "assistant", "content": response_text})
 
+            # Sauvegarde de la conversation après chaque réponse
+            self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
+
         except Exception as e:
+            import traceback
+            error_traceback = traceback.format_exc()
+            logger.error(f"Model generation error: {str(e)}\n{error_traceback}")
             yield f"Error generating response: {str(e)}"
 
     def format_prompt(self, prompt):
@@ -130,11 +160,20 @@ class Model:
         for entry in self.chat_history:
             role_tag = "<|" + entry["role"] + "|>"
             formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n"  # TODO changer le nom assitant pour un meilleur role play
+        formatted_prompt += "<|assistant|>\n" #TODO changer le nom assitant pour un meilleur role play
         return formatted_prompt
 
-    def reset_memory(self, profile_id='TNIA'):
+    def reset_memory(self):
         """Réinitialise l'historique de conversation."""
-        self.chat_history = [{"role": "system",
-                              "content": PROFILES[profile_id]}]
-        logger.info("Conversation memory reset with profile: %s", profile_id)
+        self.chat_history = []
+        # Génère un nouveau ID de conversation
+        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+
+    def load_conversation_history(self, conversation_id):
+        """Charge une conversation existante."""
+        conversation_data = self.conversation_manager.load_conversation(conversation_id)
+        if conversation_data:
+            self.chat_history = conversation_data.get("messages", [])
+            self.current_conversation_id = conversation_id
+            return True
+        return False

@@ -8,6 +8,7 @@ import {
     getProfil,
 } from "../components/services/BackendService.ts";
 import {useState} from "react";
+import {History} from "@/pages/history.tsx";
 
 export const CommonParent = () => {
     const [showTokenBorders, setShowTokenBorders] = useState(false);
@@ -53,6 +54,7 @@ export const CommonParent = () => {
                     <Route path="/veracite" element={<Learning/>}/>
                     <Route path="/mathematiques" element={<Learning/>}/>
                     <Route path="/espace-vectoriel" element={<Learning/>}/>
+                    <Route path="/history" element={<History/>}/>
                 </Routes>
             </div>
         </Router>
