@@ -1,11 +1,11 @@
 import logging
-import time
-
-from flask import Flask, request, jsonify, Response, json
+import traceback
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
 from model import Model
 from conversation_manager import ConversationManager
+from profiles.profiles import get_profile_names, get_profile_content
 
 # Set up logging
 logger = logging.getLogger("FlaskAppLogger")
@@ -22,124 +22,12 @@ CORS(app)
 
 logger.info("Loading models")
 logger.info("Loading Mistral")
-mistral_model = Model("mistral")
-#mistral_model = None
+mistral_model = Model("mistral", profile_id="default")
 logger.info("Mistral loaded")
 logger.info("All models are loaded")
 
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()
-
-def llm_response_stream_mocked(_, prompt):
-    """
-    :param prompt: Prompt text to send to the model
-    :return: Generator for streaming response
-    """
-    try:
-        logger.info(f"Starting response generation for prompt: {prompt[:30]}...")  # Log the first part of the prompt
-        """
-        for chunk in model.generate_response_stream(prompt):
-            logger.debug(f"Processing chunk: {chunk[:50]}...")  # Log the first part of the chunk for better tracking
-            yield chunk
-        """
-        mock_tokens = [
-            {
-                "token": "# Hello",
-                "probabilities": [
-                    {"token": "Hello", "probability": 0.8},
-                    {"token": "Hi", "probability": 0.1},
-                    {"token": "Hey", "probability": 0.05},
-                    {"token": "Greetings", "probability": 0.03},
-                    {"token": "Salutations", "probability": 0.02}
-                ]
-            },
-            {
-                "token": "world!",
-                "probabilities": [
-                    {"token": "world!", "probability": 0.9},
-                    {"token": "Earth!", "probability": 0.05},
-                    {"token": "everyone!", "probability": 0.03},
-                    {"token": "folks!", "probability": 0.01},
-                    {"token": "humans!", "probability": 0.01}
-                ]
-            },
-            {
-                "token": "*This*",
-                "probabilities": [
-                    {"token": "This", "probability": 0.7},
-                    {"token": "That", "probability": 0.2},
-                    {"token": "It", "probability": 0.1}
-                ]
-            },
-            {
-                "token": "is",
-                "probabilities": [
-                    {"token": "is", "probability": 0.85},
-                    {"token": "was", "probability": 0.1},
-                    {"token": "will be", "probability": 0.05}
-                ]
-            },
-            {
-                "token": "_a_",
-                "probabilities": [
-                    {"token": "a", "probability": 0.95},
-                    {"token": "an", "probability": 0.05}
-                ]
-            },
-            {
-                "token": "- long",
-                "probabilities": [
-                    {"token": "long", "probability": 0.6},
-                    {"token": "extended", "probability": 0.2},
-                    {"token": "lengthy", "probability": 0.1},
-                    {"token": "prolonged", "probability": 0.1}
-                ]
-            },
-            {
-                "token": "- sentence\n",
-                "probabilities": [
-                    {"token": "sentence", "probability": 0.75},
-                    {"token": "phrase", "probability": 0.15},
-                    {"token": "statement", "probability": 0.1}
-                ]
-            },
-            {
-                "token": "for",
-                "probabilities": [
-                    {"token": "for", "probability": 0.9},
-                    {"token": "to", "probability": 0.05},
-                    {"token": "in", "probability": 0.05}
-                ]
-            },
-            {
-                "token": "testing",
-                "probabilities": [
-                    {"token": "testing", "probability": 0.8},
-                    {"token": "examining", "probability": 0.1},
-                    {"token": "checking", "probability": 0.1}
-                ]
-            },
-            {
-                "token": "purposes.",
-                "probabilities": [
-                    {"token": "purposes.", "probability": 0.85},
-                    {"token": "reasons.", "probability": 0.1},
-                    {"token": "goals.", "probability": 0.05}
-                ]
-            }
-        ]
-
-        for token_data in mock_tokens:
-            json_data = json.dumps(token_data)
-            yield f"data: {json_data}\n\n"  # Format as Server-Sent Events (SSE)
-            # sleep 5 seconds
-            time.sleep(1)
-
-    except Exception as e:
-        logger.error(f"Error generating response: {str(e)}")
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-
 
 def llm_response_stream(model, prompt):
     """
@@ -152,7 +40,8 @@ def llm_response_stream(model, prompt):
             logger.debug(f"Processing chunk: {chunk[:50]}...")  # Log the first part of the chunk for better tracking
             yield chunk
     except Exception as e:
-        logger.error(f"Error generating response: {str(e)}")
+        error_traceback = traceback.format_exc()
+        logger.error(f"Error generating response: {str(e)}\n{error_traceback}")
         yield f"Error generating response: {str(e)}"
 
 
@@ -170,23 +59,38 @@ def llm_completions():
         prompt = data.get('prompt', '')
         model = data.get('model', 'mistral')
         conversation_id = data.get('conversation_id', None)
+        profile_id = data.get('profile_id', None)  # Nouveau: profile_id pour choisir un profil
 
         logger.info(f"Received prompt: {prompt}")
 
+        if profile_id and model == 'mistral' and mistral_model.profile_id != profile_id:
+            success = mistral_model.change_profile(profile_id)
+            if success:
+                logger.info(f"Profile changed to {profile_id}")
+            else:
+                logger.warning(f"Failed to change profile to {profile_id}")
+
         # Si un ID de conversation est fourni, charge cette conversation
         if conversation_id:
-            success = mistral_model.load_conversation_history(conversation_id)
-            if not success:
-                return jsonify({"error": "Conversation not found"}), 404
+            if model == 'mistral':
+                success = mistral_model.load_conversation_history(conversation_id)
+                if not success:
+                    logger.error(f"Conversation not found: {conversation_id}")
+                    mistral_model.reset_memory()
+                    mistral_model.current_conversation_id = conversation_id
+                    logger.info(f"Created new conversation with ID: {conversation_id}")
+            else:
+                success = deepseek_model.load_conversation_history(conversation_id)
+                if not success:
+                    logger.error(f"Conversation not found: {conversation_id}")
+                    return jsonify({"error": "Conversation not found"}), 404
 
         if not prompt:
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8',
-                        status=200)
-        # return Response(llm_response_stream_mocked(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
+        return Response(llm_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
@@ -242,13 +146,88 @@ def reset_memory():
     Réinitialise l'historique des conversations.
     """
     try:
-        mistral_model.reset_memory()
+        data = request.json or {}
+        profile_id = data.get('profile_id')
+
+        if profile_id:
+            mistral_model.change_profile(profile_id)
+            logger.info(f"Memory reset with new profile: {profile_id}")
+        else:
+            # Reset standard
+            mistral_model.reset_memory()
+            logger.info("Memory reset with current profile")
+
         return jsonify({
+
+        # Renvoie l'ID de conversation et les infos du profil actuel
             "message": "Mémoire de conversation réinitialisée",
-            "conversation_id": mistral_model.current_conversation_id
+            "conversation_id": mistral_model.current_conversation_id,
+            "profile": {
+                "id": mistral_model.profile_id,
+                "name": mistral_model.profile_name
+            }
         }), 200
     except Exception as e:
         logger.error(f"Error resetting memory: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/profiles', methods=['GET'])
+def get_available_profiles():
+    """
+    Récupère la liste des profils disponibles pour l'IA.
+    """
+    try:
+        profiles = get_profile_names()
+        return jsonify({"profiles": profiles}), 200
+    except Exception as e:
+        logger.error(f"Error getting profiles: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/profiles/current', methods=['GET'])
+def get_current_profile():
+    """
+    Récupère le profil actuel utilisé par l'IA.
+    """
+    try:
+        profile_info = {
+            "id": mistral_model.profile_id,
+            "name": mistral_model.profile_name
+        }
+        return jsonify(profile_info), 200
+    except Exception as e:
+        logger.error(f"Error getting current profile: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/profiles/change', methods=['POST'])
+def change_profile():
+    """
+    Change le profil utilisé par l'IA.
+    """
+    try:
+        data = request.json
+        if not data or 'profile_id' not in data:
+            return jsonify({"error": "profile_id is required"}), 400
+
+        profile_id = data['profile_id']
+        success = mistral_model.change_profile(profile_id)
+
+        if success:
+            return jsonify({
+                "message": f"Profile changed to {profile_id}",
+                "profile": {
+                    "id": mistral_model.profile_id,
+                    "name": mistral_model.profile_name
+                },
+                "conversation_id": mistral_model.current_conversation_id
+            }), 200
+        else:
+            return jsonify({"error": f"Invalid profile ID: {profile_id}"}), 400
+
+    except Exception as e:
+        logger.error(f"Error changing profile: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -265,4 +244,5 @@ def health_check():
 
 if __name__ == '__main__':
     logger.info("Starting Flask app")
+    #TODO: Enlever le debug avant le rendu final
     app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)

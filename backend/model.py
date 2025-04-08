@@ -2,7 +2,7 @@ from threading import Thread
 import logging
 import json
 import time
-import _queue
+import queue as _queue
 
 import torch
 from huggingface_hub import login
@@ -11,6 +11,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from env import HF_TOKEN
 from env import CACHE_DIR
 from conversation_manager import ConversationManager
+from profiles import get_profile_content
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -20,7 +21,15 @@ class Model:
         "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
     }
 
-    def __init__(self, model_chosen):
+    @property
+    def current_conversation_id(self):
+        return self._current_conversation_id
+
+    @current_conversation_id.setter
+    def current_conversation_id(self, conversation_id):
+        self._current_conversation_id = conversation_id
+
+    def __init__(self, model_chosen, profile_id="default"):
         # Check if GPU is available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"📌 Using device: {self.device}")
@@ -32,12 +41,34 @@ class Model:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
-        self.chat_history = [{"role": "system",
-                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
-                                         "concise,en maintenant le contexte de la conversation."
-                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+
+        # Chargement du profil sélectionné
+        self.profile_id = profile_id
+        self.load_profile(profile_id)
+
         self.conversation_manager = ConversationManager()
-        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+        self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+
+    def load_profile(self, profile_id):
+        """Charge un profil spécifique pour l'IA"""
+        profile = get_profile_content(profile_id)
+        self.profile_id = profile_id
+        self.profile_name = profile["name"]
+
+        # Initialisation de l'historique avec le prompt système du profil
+        self.chat_history = [{"role": "system", "content": profile["system_prompt"]}]
+        logger.info(f"Profil chargé: {self.profile_name} (ID: {self.profile_id})")
+
+        return True
+
+    def change_profile(self, profile_id):
+        """Change le profil de l'IA et réinitialise l'historique"""
+        success = self.load_profile(profile_id)
+        if success:
+            # Génère un nouveau conversation ID pour cette nouvelle session avec profil différent
+            self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+            return True
+        return False
 
     @staticmethod
     def login_hugging_face():
@@ -103,7 +134,7 @@ class Model:
             tokenized_inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
 
             # Setup streamer
-            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=10.0)
+            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
 
             # Create generation config
             generation_kwargs = dict(
@@ -136,11 +167,11 @@ class Model:
                 else:
                     yield "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer."
 
-            # Ajout de la réponse du modèle dans l'historique
-            self.chat_history.append({"role": "assistant", "content": response_text})
+            if response_text:
+                self.chat_history.append({"role": "assistant", "content": response_text})
 
-            # Sauvegarde de la conversation après chaque réponse
-            self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
+                # Sauvegarde de la conversation après chaque réponse
+                self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
 
         except Exception as e:
             import traceback
@@ -167,16 +198,36 @@ class Model:
         return formatted_prompt
 
     def reset_memory(self):
-        """Réinitialise l'historique de conversation."""
-        self.chat_history = []
-        # Génère un nouveau ID de conversation
-        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+        """Réinitialise l'historique de conversation en conservant uniquement le prompt système."""
+        # Sauvegarde du prompt système avant de réinitialiser
+        system_prompt = None
+        for msg in self.chat_history:
+            if msg.get("role") == "system":
+                system_prompt = msg
+                break
 
+        # Réinitialisation de l'historique
+        if system_prompt:
+            self.chat_history = [system_prompt]
+        else:
+            # Si aucun prompt système n'est trouvé, recharge le profil actuel
+            self.load_profile(self.profile_id)
+
+        # Génère un nouveau ID de conversation
+        self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+        
     def load_conversation_history(self, conversation_id):
         """Charge une conversation existante."""
         conversation_data = self.conversation_manager.load_conversation(conversation_id)
         if conversation_data:
             self.chat_history = conversation_data.get("messages", [])
-            self.current_conversation_id = conversation_id
+            self._current_conversation_id = conversation_id
+
+            # Vérifie si le profil utilisé est spécifié dans les métadonnées
+            metadata = conversation_data.get("metadata", {})
+            if "profile_id" in metadata:
+                self.profile_id = metadata.get("profile_id")
+                self.profile_name = get_profile_content(self.profile_id)["name"]
+
             return True
         return False
