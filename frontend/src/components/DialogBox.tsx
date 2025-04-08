@@ -229,24 +229,55 @@ export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBo
 
                 let chunk = decoder.decode(value, {stream: true});
                 chunk = chunk.replace(/<\/s>$/g, ""); // Remove </s> at the end of the message
-                chunk.split("\n\n").forEach((event) => {
-                    if (event.startsWith("data: ")) {
-                        const jsonData = JSON.parse(event.replace("data: ", "").trim());
-                        if (jsonData.error) throw new Error(jsonData.error);
+                
+                // Gestion flexible des formats de réponse
+                try {
+                    // Format SSE standard (data: {...})
+                    if (chunk.includes("data: ")) {
+                        chunk.split("\n\n").forEach((event) => {
+                            if (event.startsWith("data: ")) {
+                                const jsonData = JSON.parse(event.replace("data: ", "").trim());
+                                if (jsonData.error) throw new Error(jsonData.error);
 
-                        botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities});
-
-                        setMessages((prevMessages) => {
-                            const updatedMessages = [...prevMessages];
-                            if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
-                                updatedMessages[updatedMessages.length - 1].tokens = botTokens;
-                            } else {
-                                updatedMessages.push({tokens: botTokens, isUser: false});
+                                botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities || []});
                             }
-                            return [...updatedMessages];
                         });
+                    } 
+                    // Stream de données brut (peut être JSON ou texte)
+                    else {
+                        try {
+                            // Essayer de parser comme JSON
+                            const jsonData = JSON.parse(chunk);
+                            if (jsonData.error) throw new Error(jsonData.error);
+                            
+                            // Si c'est un objet avec token
+                            if (jsonData.token) {
+                                botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities || []});
+                            } 
+                            // Si c'est un objet sans token mais avec du texte
+                            else if (jsonData.text || jsonData.content) {
+                                botTokens.push({token: jsonData.text || jsonData.content, probabilities: []});
+                            }
+                        } catch (e) {
+                            // Si ce n'est pas du JSON valide, considérer comme du texte brut
+                            botTokens.push({token: chunk, probabilities: []});
+                        }
                     }
-                });
+                    
+                    // Mettre à jour les messages avec les nouveaux tokens
+                    setMessages((prevMessages) => {
+                        const updatedMessages = [...prevMessages];
+                        if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
+                            updatedMessages[updatedMessages.length - 1].tokens = [...botTokens];
+                        } else {
+                            updatedMessages.push({tokens: [...botTokens], isUser: false});
+                        }
+                        return updatedMessages;
+                    });
+                    
+                } catch (error) {
+                    console.error("Error parsing stream chunk:", error, "Chunk:", chunk);
+                }
             }
 
             // Si c'est une nouvelle conversation, récupérer l'ID attribué

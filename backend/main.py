@@ -90,7 +90,7 @@ def llm_completions():
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream(mistral_model, prompt), content_type='text/plain;charset=utf-8', status=200)
+        return Response(llm_response_stream(mistral_model, prompt), content_type='text/event-stream', status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")

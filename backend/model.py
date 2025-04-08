@@ -122,8 +122,14 @@ class Model:
         """
         Generate streaming response from the language model
         """
+        import json
+        import traceback
+        import time
+        import queue as _queue
+
         if self.ai_model is None or self.tokenizer is None:
-            yield "Error: Model not loaded correctly."
+            json_error = json.dumps({"error": "Model not loaded correctly."})
+            yield f"data: {json_error}\n\n"
             return
 
         try:
@@ -134,7 +140,7 @@ class Model:
             tokenized_inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
 
             # Setup streamer
-            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=20.0)
+            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=90.0)
 
             # Create generation config
             generation_kwargs = dict(
@@ -159,13 +165,17 @@ class Model:
             try:
                 for chunk in streamer:
                     response_text += chunk
-                    yield chunk
+                    # Format the chunk as a JSON object with token and empty probabilities
+                    json_chunk = json.dumps({"token": chunk, "probabilities": []})
+                    yield f"data: {json_chunk}\n\n"
             except _queue.Empty:
                 logger.warning("Streamer queue empty, generation may have stalled")
                 if response_text:
-                    yield "\n\n[Generation timed out, but partial response retrieved]"
+                    error_msg = json.dumps({"token": "\n\n[Generation timed out, but partial response retrieved]", "probabilities": []})
+                    yield f"data: {error_msg}\n\n"
                 else:
-                    yield "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer."
+                    error_msg = json.dumps({"token": "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer.", "probabilities": []})
+                    yield f"data: {error_msg}\n\n"
 
             if response_text:
                 self.chat_history.append({"role": "assistant", "content": response_text})
@@ -177,7 +187,8 @@ class Model:
             import traceback
             error_traceback = traceback.format_exc()
             logger.error(f"Model generation error: {str(e)}\n{error_traceback}")
-            yield f"Error generating response: {str(e)}"
+            error_msg = json.dumps({"error": str(e), "token": f"Error generating response: {str(e)}", "probabilities": []})
+            yield f"data: {error_msg}\n\n"
 
     def format_prompt(self, prompt):
         """
