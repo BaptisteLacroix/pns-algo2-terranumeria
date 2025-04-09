@@ -69,11 +69,13 @@ export const ApiService = {
     },
 
     // Réponses et messages
-    sendMessage: async (prompt: string, model: string = "mistral", conversationId?: string, profileId?: string) => {
+    sendMessage: async (prompt: string, model: string = "mistral", temperature: number, conversationId?: string, profileId?: string) => {
         const requestBody: Record<string, any> = {
             prompt,
             model
         };
+
+        requestBody.temperature = temperature;
         
         if (conversationId) {
             requestBody.conversation_id = conversationId;

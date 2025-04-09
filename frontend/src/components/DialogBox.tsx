@@ -93,6 +93,7 @@ type DialogBoxProps = {
     currentConversationId: string | null;
     setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
     currentProfileId: string | null;
+    temperature: number;
 };
 
 // Composant principal
@@ -103,7 +104,8 @@ export const DialogBox = ({
     setMessages,
     currentConversationId,
     setCurrentConversationId,
-    currentProfileId
+    currentProfileId,
+    temperature,
 }: DialogBoxProps) => {
     // États locaux
     const [message, setMessage] = useState("");
@@ -207,8 +209,9 @@ export const DialogBox = ({
             const response = await ApiService.sendMessage(
                 enrichedMessage,
                 "mistral",
+                temperature,
                 currentConversationId || undefined,
-                currentProfileId || undefined
+                currentProfileId || undefined,
             );
 
             if (!response.body) throw new Error("No response body");

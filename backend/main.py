@@ -29,7 +29,7 @@ logger.info("All models are loaded")
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()
 
-def llm_response_stream(model, prompt):
+def llm_response_stream(model, prompt, temperature):
     """
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
@@ -58,6 +58,7 @@ def llm_completions():
         # Validate the required data in the request
         prompt = data.get('prompt', '')
         model = data.get('model', 'mistral')
+        temperature = data.get('temperature', 0.7)
         conversation_id = data.get('conversation_id', None)
         profile_id = data.get('profile_id', None)  # Nouveau: profile_id pour choisir un profil
 
@@ -72,25 +73,19 @@ def llm_completions():
 
         # Si un ID de conversation est fourni, charge cette conversation
         if conversation_id:
-            if model == 'mistral':
-                success = mistral_model.load_conversation_history(conversation_id)
-                if not success:
-                    logger.error(f"Conversation not found: {conversation_id}")
-                    mistral_model.reset_memory()
-                    mistral_model.current_conversation_id = conversation_id
-                    logger.info(f"Created new conversation with ID: {conversation_id}")
-            else:
-                success = deepseek_model.load_conversation_history(conversation_id)
-                if not success:
-                    logger.error(f"Conversation not found: {conversation_id}")
-                    return jsonify({"error": "Conversation not found"}), 404
+            success = mistral_model.load_conversation_history(conversation_id)
+            if not success:
+                logger.error(f"Conversation not found: {conversation_id}")
+                mistral_model.reset_memory()
+                mistral_model.current_conversation_id = conversation_id
+                logger.info(f"Created new conversation with ID: {conversation_id}")
 
         if not prompt:
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream(mistral_model, prompt), content_type='text/event-stream', status=200)
+        return Response(llm_response_stream(mistral_model, prompt, temperature), content_type='text/event-stream', status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
@@ -244,5 +239,4 @@ def health_check():
 
 if __name__ == '__main__':
     logger.info("Starting Flask app")
-    #TODO: Enlever le debug avant le rendu final
-    app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, threaded=True, host='0.0.0.0', port=5000)
