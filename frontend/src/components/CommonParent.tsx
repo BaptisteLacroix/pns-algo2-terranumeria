@@ -3,9 +3,13 @@ import {SidePanelLeft} from "@/components/SidePanelLeft.tsx";
 import {SidePanelRight} from "@/components/SidePanelRight.tsx";
 import {DialogBox} from "@/components/DialogBox.tsx";
 import {Learning} from "@/pages/learning.tsx";
-import { History } from "@/pages/history.tsx";
-import { ApiService } from "../services/ApiService";
-import { useState, useEffect } from "react";
+import {Biais} from "@/pages/biais.tsx";
+import {Veracite} from "@/pages/veracite.tsx";
+import {Mathematiques} from "@/pages/mathematiques.tsx";
+import {EspaceVectoriel} from "@/pages/espace-vectoriel.tsx";
+import {History} from "@/pages/history.tsx";
+import {ApiService} from "../services/ApiService";
+import {useState, useEffect} from "react";
 
 // Définition du type de message pour le partage entre les composants
 export type TokenData = {
@@ -100,10 +104,10 @@ export const CommonParent = () => {
                         }
                     />
                     <Route path="/learning" element={<Learning/>}/>
-                    <Route path="/biais" element={<Learning/>}/>
-                    <Route path="/veracite" element={<Learning/>}/>
-                    <Route path="/mathematiques" element={<Learning/>}/>
-                    <Route path="/espace-vectoriel" element={<Learning/>}/>
+                    <Route path="/biais" element={<Biais/>}/>
+                    <Route path="/veracite" element={<Veracite/>}/>
+                    <Route path="/mathematiques" element={<Mathematiques/>}/>
+                    <Route path="/espace-vectoriel" element={<EspaceVectoriel/>}/>
                     <Route path="/history" element={<History/>}/>
                 </Routes>
             </div>
