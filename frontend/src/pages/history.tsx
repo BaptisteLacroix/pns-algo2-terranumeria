@@ -1,13 +1,8 @@
 import { Card, CardBody, Button } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ApiService, Conversation } from "../services/ApiService";
 import "../styles/globals.css";
-
-type Conversation = {
-    id: string;
-    timestamp: string;
-    preview: string;
-};
 
 export const History: React.FC = () => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -22,24 +17,8 @@ export const History: React.FC = () => {
     const fetchConversations = async () => {
         try {
             setLoading(true);
-            const response = await fetch("http://127.0.0.1:5000/conversations");
-            
-            if (!response.ok) {
-                throw new Error(`Erreur lors de la récupération des conversations: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            const formattedConversations = data.conversations.map((conv: any) => ({
-                ...conv,
-                date: new Date(conv.timestamp).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                })
-            }));
-            
-            setConversations(formattedConversations);
+            const conversationsData = await ApiService.getConversations();
+            setConversations(conversationsData);
             setError(null);
         } catch (err) {
             console.error("Erreur:", err);
@@ -57,14 +36,7 @@ export const History: React.FC = () => {
         event.stopPropagation();
         
         try {
-            const response = await fetch(`http://127.0.0.1:5000/conversations/${id}`, {
-                method: "DELETE"
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Erreur lors de la suppression: ${response.status}`);
-            }
-            
+            await ApiService.deleteConversation(id);
             fetchConversations();
         } catch (err) {
             console.error("Erreur lors de la suppression:", err);

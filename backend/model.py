@@ -2,17 +2,48 @@ from threading import Thread
 import logging
 import json
 import time
-import _queue
+import queue as _queue
 
 import torch
+import torch.nn.functional as F
 from huggingface_hub import login
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer, LogitsProcessor
 
 from env import HF_TOKEN
 from env import CACHE_DIR
 from conversation_manager import ConversationManager
+from profiles import get_profile_content
 
 logger = logging.getLogger("FlaskAppLogger")
+
+
+# Classe pour capturer les probabilités des tokens pendant la génération
+class ProbabilityLogitsProcessor(LogitsProcessor):
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+        self.last_token_probabilities = []
+        
+    def __call__(self, input_ids, scores):
+        # Calcul des probabilités pour le token actuel (scores représente les logits pour ce token)
+        # Applique softmax pour convertir les logits en probabilités
+        probs = F.softmax(scores, dim=-1)
+        
+        # Récupération des 5 tokens les plus probables
+        top_probs, top_indices = torch.topk(probs, 5)
+        
+        # Conversion en liste pour être facilement sérialisable en JSON
+        probs_list = []
+        for i in range(min(5, len(top_indices[0]))):
+            token_id = top_indices[0][i].item()
+            prob = top_probs[0][i].item()
+            token_text = self.tokenizer.decode([token_id])
+            probs_list.append({"token": token_text, "probability": round(prob, 4)})
+        
+        # Stockage des probabilités pour ce token spécifique
+        self.last_token_probabilities = probs_list
+        
+        # Important: ne pas modifier les scores pour ne pas affecter la génération
+        return scores
 
 
 class Model:
@@ -20,7 +51,15 @@ class Model:
         "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
     }
 
-    def __init__(self, model_chosen):
+    @property
+    def current_conversation_id(self):
+        return self._current_conversation_id
+
+    @current_conversation_id.setter
+    def current_conversation_id(self, conversation_id):
+        self._current_conversation_id = conversation_id
+
+    def __init__(self, model_chosen, profile_id="default"):
         # Check if GPU is available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"📌 Using device: {self.device}")
@@ -32,12 +71,37 @@ class Model:
             print(f"✅ Model {self.model_name} loaded successfully")
         else:
             print("❌ Error loading model or tokenizer")
-        self.chat_history = [{"role": "system",
-                              "content": "Tu es un assistant utile et amical. Réponds toujours de manière claire et "
-                                         "concise,en maintenant le contexte de la conversation."
-                                         "Ne jamais inclure la balise '<|user|>' dans tes propres réponses."}]
+
+        # Chargement du profil sélectionné
+        self.profile_id = profile_id
+        self.load_profile(profile_id)
+
         self.conversation_manager = ConversationManager()
-        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+        self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+        
+        # Initialiser le processeur de logits pour les probabilités
+        self.prob_processor = None
+
+    def load_profile(self, profile_id):
+        """Charge un profil spécifique pour l'IA"""
+        profile = get_profile_content(profile_id)
+        self.profile_id = profile_id
+        self.profile_name = profile["name"]
+
+        # Initialisation de l'historique avec le prompt système du profil
+        self.chat_history = [{"role": "system", "content": profile["system_prompt"]}]
+        logger.info(f"Profil chargé: {self.profile_name} (ID: {self.profile_id})")
+
+        return True
+
+    def change_profile(self, profile_id):
+        """Change le profil de l'IA et réinitialise l'historique"""
+        success = self.load_profile(profile_id)
+        if success:
+            # Génère un nouveau conversation ID pour cette nouvelle session avec profil différent
+            self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+            return True
+        return False
 
     @staticmethod
     def login_hugging_face():
@@ -82,71 +146,145 @@ class Model:
                 offload_state_dict=True,   # Enable state dict offloading to save GPU memory
                 low_cpu_mem_usage=True     # Optimize CPU memory usage
             )
+            
+            self.last_logits = None
 
             return model
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")
 
+    def compute_token_probabilities(self, input_ids, attention_mask, next_token=None):
+        """
+        Calcule les probabilités des tokens possibles pour la génération suivante
+        """
+        import torch.nn.functional as F
+        
+        # Préparation des inputs
+        with torch.no_grad():
+            outputs = self.ai_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                return_dict=True
+            )
+            
+            # Récupération des logits du dernier token
+            logits = outputs.logits[:, -1, :]
+            self.last_logits = logits.detach().clone()
+            
+            # Application de softmax pour obtenir les probabilités
+            probs = F.softmax(logits, dim=-1)
+            
+            # Récupération des top 5 tokens les plus probables
+            top_probs, top_indices = torch.topk(probs, 5)
+            
+            probabilities = []
+            for i, (token_id, prob) in enumerate(zip(top_indices[0].tolist(), top_probs[0].tolist())):
+                token_text = self.tokenizer.decode([token_id])
+                probabilities.append({"token": token_text, "probability": round(prob, 4)})
+            
+            return probabilities
+
     def generate_response_stream(self, prompt):
         """
-        Generate streaming response from the language model
+        Generate streaming response from the language model with token probabilities
         """
+        import json
+        import traceback
+        import time
+        import queue as _queue
+
         if self.ai_model is None or self.tokenizer is None:
-            yield "Error: Model not loaded correctly."
+            json_error = json.dumps({"error": "Model not loaded correctly."})
+            yield f"data: {json_error}\n\n"
             return
 
         try:
-            # format the prompt
+            # Format the prompt
             formatted_prompt = self.format_prompt(prompt)
 
             # Prepare input
             tokenized_inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
-
+            input_ids = tokenized_inputs["input_ids"]
+            attention_mask = tokenized_inputs["attention_mask"]
+            
+            # Create probability processor with fresh state
+            self.prob_processor = ProbabilityLogitsProcessor(self.tokenizer)
+            
             # Setup streamer
-            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=10.0)
+            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=900.0)
 
-            # Create generation config
+            # Variable pour stocker les probabilités du token précédent
+            previous_token_probabilities = []
+
+            # Configure generation with logits processor for probabilities
             generation_kwargs = dict(
-                inputs=tokenized_inputs["input_ids"],
-                attention_mask=tokenized_inputs["attention_mask"],
+                inputs=input_ids,
+                attention_mask=attention_mask,
                 max_new_tokens=512,
                 temperature=0.7,
                 top_p=0.95,
                 do_sample=True,
-                streamer=streamer
+                streamer=streamer,
+                logits_processor=[self.prob_processor],
+                output_scores=True,
+                return_dict_in_generate=True
             )
 
             # Start generation in a separate thread
             generation_thread = Thread(target=self.ai_model.generate, kwargs=generation_kwargs)
-            generation_thread.daemon = True  # Make the thread daemon so it doesn't block process exit
+            generation_thread.daemon = True
             generation_thread.start()
 
             # Wait for generation to actually start before yielding
             time.sleep(0.5)
 
+            empty_tokens = 0
             response_text = ""
             try:
                 for chunk in streamer:
                     response_text += chunk
-                    yield chunk
+                    
+                    # Si le chunk est vide, on incrémente le compteur
+                    if not chunk.strip():
+                        empty_tokens += 1
+                        # Si trop de tokens vides consécutifs, on peut choisir de ne pas les envoyer
+                        if empty_tokens > 3:
+                            continue
+                    else:
+                        # Réinitialisation si on a un token non vide
+                        empty_tokens = 0
+
+                    current_probabilities = self.prob_processor.last_token_probabilities
+                    
+                    json_chunk = json.dumps({
+                        "token": chunk, 
+                        "probabilities": previous_token_probabilities
+                    })
+                    logger.debug(f"Sending chunk with token: '{chunk}' and {len(previous_token_probabilities)} probabilities")
+                    yield f"data: {json_chunk}\n\n"
+                    
+                    previous_token_probabilities = current_probabilities
+
             except _queue.Empty:
                 logger.warning("Streamer queue empty, generation may have stalled")
                 if response_text:
-                    yield "\n\n[Generation timed out, but partial response retrieved]"
+                    error_msg = json.dumps({"token": "\n\n[Generation timed out, but partial response retrieved]", "probabilities": []})
+                    yield f"data: {error_msg}\n\n"
                 else:
-                    yield "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer."
+                    error_msg = json.dumps({"token": "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer.", "probabilities": []})
+                    yield f"data: {error_msg}\n\n"
 
-            # Ajout de la réponse du modèle dans l'historique
-            self.chat_history.append({"role": "assistant", "content": response_text})
-
-            # Sauvegarde de la conversation après chaque réponse
-            self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
+            if response_text:
+                self.chat_history.append({"role": "assistant", "content": response_text})
+                # Sauvegarde de la conversation après chaque réponse
+                self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
 
         except Exception as e:
             import traceback
             error_traceback = traceback.format_exc()
             logger.error(f"Model generation error: {str(e)}\n{error_traceback}")
-            yield f"Error generating response: {str(e)}"
+            error_msg = json.dumps({"error": str(e), "token": f"Error generating response: {str(e)}", "probabilities": []})
+            yield f"data: {error_msg}\n\n"
 
     def format_prompt(self, prompt):
         """
@@ -167,16 +305,36 @@ class Model:
         return formatted_prompt
 
     def reset_memory(self):
-        """Réinitialise l'historique de conversation."""
-        self.chat_history = []
-        # Génère un nouveau ID de conversation
-        self.current_conversation_id = self.conversation_manager.generate_conversation_id()
+        """Réinitialise l'historique de conversation en conservant uniquement le prompt système."""
+        # Sauvegarde du prompt système avant de réinitialiser
+        system_prompt = None
+        for msg in self.chat_history:
+            if msg.get("role") == "system":
+                system_prompt = msg
+                break
 
+        # Réinitialisation de l'historique
+        if system_prompt:
+            self.chat_history = [system_prompt]
+        else:
+            # Si aucun prompt système n'est trouvé, recharge le profil actuel
+            self.load_profile(self.profile_id)
+
+        # Génère un nouveau ID de conversation
+        self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+        
     def load_conversation_history(self, conversation_id):
         """Charge une conversation existante."""
         conversation_data = self.conversation_manager.load_conversation(conversation_id)
         if conversation_data:
             self.chat_history = conversation_data.get("messages", [])
-            self.current_conversation_id = conversation_id
+            self._current_conversation_id = conversation_id
+
+            # Vérifie si le profil utilisé est spécifié dans les métadonnées
+            metadata = conversation_data.get("metadata", {})
+            if "profile_id" in metadata:
+                self.profile_id = metadata.get("profile_id")
+                self.profile_name = get_profile_content(self.profile_id)["name"]
+
             return True
         return False

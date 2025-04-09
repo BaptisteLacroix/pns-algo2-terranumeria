@@ -20,22 +20,15 @@ import {
     TableCell
 } from "@heroui/react";
 import { useLocation } from "react-router-dom";
+import { ApiService, CurrentProfile } from "../services/ApiService";
+import { Message, TokenData } from "./CommonParent";
 
-type TokenData = {
-    token: string;
-    probabilities: { token: string; probability: number }[];
-};
-
-type Message = {
-    tokens: TokenData[];
-    isUser: boolean;
-};
-
+// Composant pour afficher un token avec ses probabilités
 const TokenWithPopover = ({
-                              tokenData,
-                              showTokenBorders,
-                              showTokenPopovers,
-                          }: {
+    tokenData,
+    showTokenBorders,
+    showTokenPopovers,
+}: {
     tokenData: TokenData;
     showTokenBorders: boolean;
     showTokenPopovers: boolean;
@@ -60,28 +53,30 @@ const TokenWithPopover = ({
                     {tokenData.token}
                 </span>
             </PopoverTrigger>
-            {showTokenPopovers && (
+            {showTokenPopovers && tokenData.probabilities && tokenData.probabilities.length > 0 && (
                 <PopoverContent>
                     <div className="p-4">
-                        <h3 className="text-lg font-semibold">Token Probabilities</h3>
+                        <h3 className="text-lg font-semibold">Probabilités des tokens alternatifs</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                            Voici les tokens qui auraient pu être choisis à la place de "<span className="font-mono">{tokenData.token}</span>":
+                        </p>
                         <Table aria-label="Token Probabilities">
                             <TableHeader>
                                 <TableColumn>Token</TableColumn>
-                                <TableColumn>Probability</TableColumn>
+                                <TableColumn>Probabilité</TableColumn>
                             </TableHeader>
                             <TableBody>
                                 {tokenData.probabilities.map((prob, index) => (
                                     <TableRow key={index}>
-                                        <TableCell>{prob.token}</TableCell>
+                                        <TableCell className="font-mono">"{prob.token}"</TableCell>
                                         <TableCell>{(prob.probability * 100).toFixed(2)}%</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                         <p className="mt-2 text-sm text-gray-600">
-                            The AI selects tokens based on probability distributions
-                            calculated from the context and training data. Higher probability
-                            tokens are more likely to be chosen.
+                            L'IA sélectionne le token suivant selon ces probabilités calculées à partir 
+                            du contexte et des données d'entraînement.
                         </p>
                     </div>
                 </PopoverContent>
@@ -93,21 +88,51 @@ const TokenWithPopover = ({
 type DialogBoxProps = {
     showTokenBorders: boolean;
     showTokenPopovers: boolean;
-    resetDialog: boolean;
+    messages: Message[];
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+    currentConversationId: string | null;
+    setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
+    currentProfileId: string | null;
 };
 
-export const DialogBox: React.FC<DialogBoxProps> = ({
-                                                        showTokenBorders,
-                                                        showTokenPopovers,
-                                                        resetDialog,
-                                                    }) => {
+// Composant principal
+export const DialogBox = ({
+    showTokenBorders,
+    showTokenPopovers,
+    messages,
+    setMessages,
+    currentConversationId,
+    setCurrentConversationId,
+    currentProfileId
+}: DialogBoxProps) => {
+    // États locaux
     const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+    const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null);
+
+    // Refs et autres variables
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
+    const preprompt = "";
 
+    // Effets
+    // 1. Charger le profil actuel
+    useEffect(() => {
+        const fetchCurrentProfile = async () => {
+            try {
+                const profile = await ApiService.getCurrentProfile();
+                if (profile) {
+                    setCurrentProfile(profile);
+                }
+            } catch (err) {
+                console.error("Erreur lors du chargement du profil:", err);
+            }
+        };
+
+        fetchCurrentProfile();
+    }, []);
+
+    // 2. Charger une conversation existante si spécifiée dans l'URL
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         const conversationId = queryParams.get("conversation");
@@ -117,21 +142,33 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
         }
     }, [location.search]);
 
+    // 3. Scroll vers le bas à chaque nouveau message
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+
+    // Fonctions
     const loadConversation = async (conversationId: string) => {
         try {
             setIsLoading(true);
-            const response = await fetch(`http://127.0.0.1:5000/conversations/${conversationId}`);
+            const data = await ApiService.getConversation(conversationId);
 
-            if (!response.ok) {
-                throw new Error("Impossible de charger cette conversation");
-            }
-
-            const data = await response.json();
             setCurrentConversationId(conversationId);
 
+            // Mise à jour du profil si présent dans les métadonnées
+            if (data.metadata && data.metadata.profile_id) {
+                setCurrentProfile({
+                    id: data.metadata.profile_id,
+                    name: data.metadata.profile_name || "Profil inconnu"
+                });
+            }
+
+            // Convertir les messages du format backend vers le format frontend
             const convertedMessages: Message[] = [];
 
-            data.messages.forEach((msg: any) => {
+            data.messages?.forEach((msg: any) => {
                 if (msg.role !== "system") {
                     convertedMessages.push({
                         tokens: [{token: msg.content, probabilities: []}],
@@ -148,11 +185,7 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
         }
     };
 
-    const onEnterPress = (e: {
-        keyCode: number;
-        shiftKey: any;
-        preventDefault: () => void;
-    }) => {
+    const onEnterPress = (e: { keyCode: number; shiftKey: any; preventDefault: () => void; }) => {
         if (e.keyCode === 13 && !e.shiftKey) {
             e.preventDefault();
             submitMessage();
@@ -162,26 +195,21 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
     const submitMessage = async () => {
         if (message.trim() === "") return;
 
+        // Message original de l'utilisateur
+        const enrichedMessage = preprompt ? `${preprompt}\n\n${message}` : message;
         const userMessage: Message = {tokens: [{token: message, probabilities: []}], isUser: true};
+        
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setMessage("");
         setIsLoading(true);
 
         try {
-            const requestBody: Record<string, any> = {
-                prompt: message, // Utilisation de message au lieu de enrichedMessage
-                model: "mistral"
-            };
-
-            if (currentConversationId) {
-                requestBody.conversation_id = currentConversationId;
-            }
-
-            const response = await fetch("http://127.0.0.1:5000/responses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestBody),
-            });
+            const response = await ApiService.sendMessage(
+                enrichedMessage,
+                "mistral",
+                currentConversationId || undefined,
+                currentProfileId || undefined
+            );
 
             if (!response.body) throw new Error("No response body");
 
@@ -201,29 +229,39 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
                     if (event.startsWith("data: ")) {
                         const jsonData = JSON.parse(event.replace("data: ", "").trim());
                         if (jsonData.error) throw new Error(jsonData.error);
-
-                        botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities});
+                        
+                        const currentToken = jsonData.token;
+                        const currentProbabilities = jsonData.probabilities;
+                        
+                        botTokens.push({
+                            token: currentToken,
+                            probabilities: currentProbabilities
+                        });
 
                         setMessages((prevMessages) => {
                             const updatedMessages = [...prevMessages];
                             if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
-                                updatedMessages[updatedMessages.length - 1].tokens = botTokens;
+                                updatedMessages[updatedMessages.length - 1].tokens = [...botTokens];
                             } else {
-                                updatedMessages.push({tokens: botTokens, isUser: false});
+                                updatedMessages.push({tokens: [...botTokens], isUser: false});
                             }
-                            return [...updatedMessages];
+                            return updatedMessages;
                         });
                     }
                 });
             }
 
+            // Si c'est une nouvelle conversation, récupérer l'ID attribué
             if (!currentConversationId) {
-                const resetResponse = await fetch("http://127.0.0.1:5000/reset-memory", {
-                    method: "GET",
-                });
-                if (resetResponse.ok) {
-                    const data = await resetResponse.json();
+                try {
+                    const data = await ApiService.resetMemory(currentProfileId || undefined);
                     setCurrentConversationId(data.conversation_id);
+
+                    if (data.profile) {
+                        setCurrentProfile(data.profile);
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de la récupération de l'ID de conversation:", error);
                 }
             }
         } catch (error) {
@@ -240,50 +278,56 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
         }
     };
 
-    useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({behavior: "smooth"});
-        }
-    }, [messages]);
-
     return (
         <div className="flex flex-col w-2/3 justify-end content-around pt-4 pb-4 gap-2">
+            {/* En-tête avec l'ID de conversation et le profil */}
             {currentConversationId && (
                 <div className="px-10 mb-2">
-                    <div className="bg-blue-50 text-blue-700 py-2 px-3 rounded-md text-sm">
-                        Conversation en cours: {currentConversationId}
+                    <div className="bg-blue-50 text-blue-700 py-2 px-3 rounded-md text-sm flex justify-between items-center">
+                        <span>Conversation en cours: {currentConversationId}</span>
+                        {currentProfile && (
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+                                Profil: {currentProfile.name}
+                            </span>
+                        )}
                     </div>
                 </div>
             )}
+
+            {/* Zone des messages */}
             <ScrollShadow className="w-full h-full flex flex-col items-center pl-10 pr-10 gap-4">
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex w-full ${msg.isUser ? "justify-end" : "justify-start"}`}>
                         <div
                             className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
                             {!showTokenBorders && !showTokenPopovers ? (
-                                // Render only the complete Markdown text if available
+                                // Rendu du texte complet sans afficher les tokens individuels
                                 <div className="prose prose-sm max-w-none mt-2">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeRaw, rehypeKatex]}
                                     >
-                                        {msg.tokens.map((token) => token.token).join(" ")}
+                                        {msg.tokens.map((token) => token.token).join('')}
                                     </ReactMarkdown>
                                 </div>
                             ) : (
-                                // Otherwise, fall back to rendering token-by-token if msg.text is not present
-                                msg.tokens.map((tokenData, idx) => (
-                                    <TokenWithPopover
-                                        key={idx}
-                                        tokenData={tokenData}
-                                        showTokenBorders={showTokenBorders}
-                                        showTokenPopovers={showTokenPopovers}
-                                    />
-                                ))
+                                // Affichage token par token avec les popover ou bordures
+                                <div className="flex flex-wrap">
+                                    {msg.tokens.map((tokenData, idx) => (
+                                        <TokenWithPopover
+                                            key={idx}
+                                            tokenData={tokenData}
+                                            showTokenBorders={showTokenBorders}
+                                            showTokenPopovers={showTokenPopovers}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
                 ))}
+
+                {/* Indicateur de chargement */}
                 {isLoading && (
                     <div className="flex w-full justify-start">
                         <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-200">
@@ -292,25 +336,32 @@ export const DialogBox: React.FC<DialogBoxProps> = ({
                         </div>
                     </div>
                 )}
-                <div ref={messagesEndRef}/>
+
+                {/* Référence pour le défilement automatique */}
+                <div ref={messagesEndRef} />
             </ScrollShadow>
+
+            {/* Zone de saisie et bouton d'envoi */}
             <div className="w-full h-2/10 flex justify-center">
                 <div className="bottom-4 left-1/2 w-2/3">
-                    <div className={"flex flex-row items-center gap-2"}>
+                    <div className="flex flex-row items-center gap-2">
                         <Textarea
                             className="w-full h-20"
-                            placeholder="Enter your message"
+                            placeholder="Entrez votre message..."
                             radius="none"
                             variant="flat"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={onEnterPress}
+                            isDisabled={isLoading}
                         />
                         <Button
                             className="size-20 hover:bg-yellow"
                             color="primary"
                             radius="none"
                             onPress={submitMessage}
+                            isDisabled={isLoading}
+                            isLoading={isLoading}
                         >
                             Envoyer
                         </Button>

@@ -12,11 +12,12 @@ class ConversationManager:
         self.storage_dir = storage_dir
         os.makedirs(storage_dir, exist_ok=True)
     
-    def save_conversation(self, conversation_id, messages):
+    def save_conversation(self, conversation_id, messages, metadata=None):
         """
         Sauvegarde une conversation
         :param conversation_id: Identifiant unique de la conversation
         :param messages: Liste des messages de la conversation
+        :param metadata: Métadonnées additionnelles (profil utilisé, etc.)
         :return: Le chemin vers le fichier de la conversation
         """
         # Création du fichier avec le timestamp et l'ID de conversation
@@ -28,6 +29,10 @@ class ConversationManager:
             "timestamp": datetime.now().isoformat(),
             "messages": messages
         }
+        
+        # Ajout des métadonnées si fournies
+        if metadata:
+            conversation_data["metadata"] = metadata
         
         # Sauvegarde dans un fichier JSON
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -70,11 +75,18 @@ class ConversationManager:
                     if first_user_message:
                         preview = first_user_message.get("content", "")[:100]
                 
-                conversations.append({
+                conversation_info = {
                     "id": data.get("id"),
                     "timestamp": data.get("timestamp"),
                     "preview": preview
-                })
+                }
+                
+                # Ajouter les informations de profil si présentes
+                if "metadata" in data and "profile_id" in data["metadata"]:
+                    conversation_info["profile_id"] = data["metadata"]["profile_id"]
+                    conversation_info["profile_name"] = data["metadata"].get("profile_name", "")
+                
+                conversations.append(conversation_info)
         
         # Trie par date (du plus récent au plus ancien)
         conversations.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
