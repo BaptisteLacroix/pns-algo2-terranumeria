@@ -53,28 +53,30 @@ const TokenWithPopover = ({
                     {tokenData.token}
                 </span>
             </PopoverTrigger>
-            {showTokenPopovers && (
+            {showTokenPopovers && tokenData.probabilities && tokenData.probabilities.length > 0 && (
                 <PopoverContent>
                     <div className="p-4">
-                        <h3 className="text-lg font-semibold">Token Probabilities</h3>
+                        <h3 className="text-lg font-semibold">Probabilités des tokens alternatifs</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                            Voici les tokens qui auraient pu être choisis à la place de "<span className="font-mono">{tokenData.token}</span>":
+                        </p>
                         <Table aria-label="Token Probabilities">
                             <TableHeader>
                                 <TableColumn>Token</TableColumn>
-                                <TableColumn>Probability</TableColumn>
+                                <TableColumn>Probabilité</TableColumn>
                             </TableHeader>
                             <TableBody>
                                 {tokenData.probabilities.map((prob, index) => (
                                     <TableRow key={index}>
-                                        <TableCell>{prob.token}</TableCell>
+                                        <TableCell className="font-mono">"{prob.token}"</TableCell>
                                         <TableCell>{(prob.probability * 100).toFixed(2)}%</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                         <p className="mt-2 text-sm text-gray-600">
-                            The AI selects tokens based on probability distributions
-                            calculated from the context and training data. Higher probability
-                            tokens are more likely to be chosen.
+                            L'IA sélectionne le token suivant selon ces probabilités calculées à partir 
+                            du contexte et des données d'entraînement.
                         </p>
                     </div>
                 </PopoverContent>
@@ -227,17 +229,23 @@ export const DialogBox = ({
                     if (event.startsWith("data: ")) {
                         const jsonData = JSON.parse(event.replace("data: ", "").trim());
                         if (jsonData.error) throw new Error(jsonData.error);
-
-                        botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities});
+                        
+                        const currentToken = jsonData.token;
+                        const currentProbabilities = jsonData.probabilities;
+                        
+                        botTokens.push({
+                            token: currentToken,
+                            probabilities: currentProbabilities
+                        });
 
                         setMessages((prevMessages) => {
                             const updatedMessages = [...prevMessages];
                             if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
-                                updatedMessages[updatedMessages.length - 1].tokens = botTokens;
+                                updatedMessages[updatedMessages.length - 1].tokens = [...botTokens];
                             } else {
-                                updatedMessages.push({tokens: botTokens, isUser: false});
+                                updatedMessages.push({tokens: [...botTokens], isUser: false});
                             }
-                            return [...updatedMessages];
+                            return updatedMessages;
                         });
                     }
                 });
@@ -293,25 +301,27 @@ export const DialogBox = ({
                         <div
                             className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
                             {!showTokenBorders && !showTokenPopovers ? (
-                                // Render only the complete Markdown text if available
+                                // Rendu du texte complet sans afficher les tokens individuels
                                 <div className="prose prose-sm max-w-none mt-2">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeRaw, rehypeKatex]}
                                     >
-                                        {msg.tokens.map((token) => token.token).join(" ")}
+                                        {msg.tokens.map((token) => token.token).join('')}
                                     </ReactMarkdown>
                                 </div>
                             ) : (
-                                // Otherwise, fall back to rendering token-by-token if msg.text is not present
-                                msg.tokens.map((tokenData, idx) => (
-                                    <TokenWithPopover
-                                        key={idx}
-                                        tokenData={tokenData}
-                                        showTokenBorders={showTokenBorders}
-                                        showTokenPopovers={showTokenPopovers}
-                                    />
-                                ))
+                                // Affichage token par token avec les popover ou bordures
+                                <div className="flex flex-wrap">
+                                    {msg.tokens.map((tokenData, idx) => (
+                                        <TokenWithPopover
+                                            key={idx}
+                                            tokenData={tokenData}
+                                            showTokenBorders={showTokenBorders}
+                                            showTokenPopovers={showTokenPopovers}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
