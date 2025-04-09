@@ -5,49 +5,67 @@ import {DialogBox} from "@/components/DialogBox.tsx";
 import {Learning} from "@/pages/learning.tsx";
 import { History } from "@/pages/history.tsx";
 import { ApiService } from "../services/ApiService";
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+
+// Définition du type de message pour le partage entre les composants
+export type TokenData = {
+    token: string;
+    probabilities: { token: string; probability: number }[];
+};
+
+export type Message = {
+    tokens: TokenData[];
+    isUser: boolean;
+};
 
 export const CommonParent = () => {
     const [showTokenBorders, setShowTokenBorders] = useState(false);
     const [showTokenPopovers, setShowTokenPopovers] = useState(false);
-    const [resetDialog, setResetDialog] = useState(false);
-  const dialogRef = useRef<{ resetChatComponent: () => void } | null>(null);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+    
+    // États partagés entre CommonParent et DialogBox
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+    const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  // Récupérer le profil initial
-  useEffect(() => {
-    const fetchCurrentProfile = async () => {
-      try {
-        const profile = await ApiService.getCurrentProfile();
-        if (profile) {
-          setCurrentProfileId(profile.id);
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement du profil initial:", error);
-      }
+    // Récupérer le profil initial
+    useEffect(() => {
+        const fetchCurrentProfile = async () => {
+            try {
+                const profile = await ApiService.getCurrentProfile();
+                if (profile) {
+                    setCurrentProfileId(profile.id);
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement du profil initial:", error);
+            }
+        };
+
+        fetchCurrentProfile();
+    }, []);
+
+    const resetChat = () => {
+        setMessages([]);
+        setCurrentConversationId(null);
     };
 
-    fetchCurrentProfile();
-  }, []);
+    const resetChatWithProfil = async (profileId: string) => {
+        try {
+            await ApiService.resetMemory(profileId);
+            resetChat();
+            setCurrentProfileId(profileId);
+        } catch (error) {
+            console.error("Erreur lors de la réinitialisation du chat:", error);
+        }
+    };
 
-  const resetChatWithProfil = async (profileId: string) => {
-    try {
-      await ApiService.resetMemory(profileId);
-      dialogRef.current?.resetChatComponent();
-      setCurrentProfileId(profileId);
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation du chat:", error);
-    }
-  };
-
-  const callResetChat = async () => {
-    try {
-      await ApiService.resetMemory(currentProfileId || undefined);
-      dialogRef.current?.resetChatComponent();
-    } catch (error) {
-      console.error("Erreur lors de la réinitialisation du chat:", error);
-    }
-  };
+    const callResetChat = async () => {
+        try {
+            await ApiService.resetMemory(currentProfileId || undefined);
+            resetChat();
+        } catch (error) {
+            console.error("Erreur lors de la réinitialisation du chat:", error);
+        }
+    };
 
     return (
         <Router>
@@ -61,7 +79,11 @@ export const CommonParent = () => {
                                 <DialogBox
                                     showTokenBorders={showTokenBorders}
                                     showTokenPopovers={showTokenPopovers}
-                                    resetDialog={resetDialog}
+                                    messages={messages}
+                                    setMessages={setMessages}
+                                    currentConversationId={currentConversationId}
+                                    setCurrentConversationId={setCurrentConversationId}
+                                    currentProfileId={currentProfileId}
                                 />
                                 <SidePanelRight
                                     setShowTokenBorders={setShowTokenBorders}

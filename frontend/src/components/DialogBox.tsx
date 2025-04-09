@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -21,16 +21,7 @@ import {
 } from "@heroui/react";
 import { useLocation } from "react-router-dom";
 import { ApiService, CurrentProfile } from "../services/ApiService";
-
-type TokenData = {
-    token: string;
-    probabilities: { token: string; probability: number }[];
-};
-
-type Message = {
-    tokens: TokenData[];
-    isUser: boolean;
-};
+import { Message, TokenData } from "./CommonParent";
 
 // Composant pour afficher un token avec ses probabilités
 const TokenWithPopover = ({
@@ -95,16 +86,26 @@ const TokenWithPopover = ({
 type DialogBoxProps = {
     showTokenBorders: boolean;
     showTokenPopovers: boolean;
+    messages: Message[];
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+    currentConversationId: string | null;
+    setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
+    currentProfileId: string | null;
 };
 
 // Composant principal
-export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBoxProps>(
-    ({ showTokenBorders, showTokenPopovers }, ref) => {
-    // États
+export const DialogBox = ({
+    showTokenBorders,
+    showTokenPopovers,
+    messages,
+    setMessages,
+    currentConversationId,
+    setCurrentConversationId,
+    currentProfileId
+}: DialogBoxProps) => {
+    // États locaux
     const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null);
 
     // Refs et autres variables
@@ -112,13 +113,6 @@ export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBo
     const location = useLocation();
     const preprompt = "";
 
-    // Exposer les méthodes via forwardRef
-    useImperativeHandle(ref, () => ({
-        resetChatComponent: () => {
-            setMessages([]);
-            setCurrentConversationId(null);
-        }
-    }));
     // Effets
     // 1. Charger le profil actuel
     useEffect(() => {
@@ -212,7 +206,7 @@ export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBo
                 enrichedMessage,
                 "mistral",
                 currentConversationId || undefined,
-                currentProfile?.id
+                currentProfileId || undefined
             );
 
             if (!response.body) throw new Error("No response body");
@@ -229,61 +223,30 @@ export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBo
 
                 let chunk = decoder.decode(value, {stream: true});
                 chunk = chunk.replace(/<\/s>$/g, ""); // Remove </s> at the end of the message
-                
-                // Gestion flexible des formats de réponse
-                try {
-                    // Format SSE standard (data: {...})
-                    if (chunk.includes("data: ")) {
-                        chunk.split("\n\n").forEach((event) => {
-                            if (event.startsWith("data: ")) {
-                                const jsonData = JSON.parse(event.replace("data: ", "").trim());
-                                if (jsonData.error) throw new Error(jsonData.error);
+                chunk.split("\n\n").forEach((event) => {
+                    if (event.startsWith("data: ")) {
+                        const jsonData = JSON.parse(event.replace("data: ", "").trim());
+                        if (jsonData.error) throw new Error(jsonData.error);
 
-                                botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities || []});
+                        botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities});
+
+                        setMessages((prevMessages) => {
+                            const updatedMessages = [...prevMessages];
+                            if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
+                                updatedMessages[updatedMessages.length - 1].tokens = botTokens;
+                            } else {
+                                updatedMessages.push({tokens: botTokens, isUser: false});
                             }
+                            return [...updatedMessages];
                         });
-                    } 
-                    // Stream de données brut (peut être JSON ou texte)
-                    else {
-                        try {
-                            // Essayer de parser comme JSON
-                            const jsonData = JSON.parse(chunk);
-                            if (jsonData.error) throw new Error(jsonData.error);
-                            
-                            // Si c'est un objet avec token
-                            if (jsonData.token) {
-                                botTokens.push({token: jsonData.token, probabilities: jsonData.probabilities || []});
-                            } 
-                            // Si c'est un objet sans token mais avec du texte
-                            else if (jsonData.text || jsonData.content) {
-                                botTokens.push({token: jsonData.text || jsonData.content, probabilities: []});
-                            }
-                        } catch (e) {
-                            // Si ce n'est pas du JSON valide, considérer comme du texte brut
-                            botTokens.push({token: chunk, probabilities: []});
-                        }
                     }
-                    
-                    // Mettre à jour les messages avec les nouveaux tokens
-                    setMessages((prevMessages) => {
-                        const updatedMessages = [...prevMessages];
-                        if (updatedMessages.length > 0 && !updatedMessages[updatedMessages.length - 1].isUser) {
-                            updatedMessages[updatedMessages.length - 1].tokens = [...botTokens];
-                        } else {
-                            updatedMessages.push({tokens: [...botTokens], isUser: false});
-                        }
-                        return updatedMessages;
-                    });
-                    
-                } catch (error) {
-                    console.error("Error parsing stream chunk:", error, "Chunk:", chunk);
-                }
+                });
             }
 
             // Si c'est une nouvelle conversation, récupérer l'ID attribué
             if (!currentConversationId) {
                 try {
-                    const data = await ApiService.resetMemory(currentProfile?.id);
+                    const data = await ApiService.resetMemory(currentProfileId || undefined);
                     setCurrentConversationId(data.conversation_id);
 
                     if (data.profile) {
@@ -397,4 +360,4 @@ export const DialogBox = forwardRef<{ resetChatComponent: () => void }, DialogBo
             </div>
         </div>
     );
-});
+};
