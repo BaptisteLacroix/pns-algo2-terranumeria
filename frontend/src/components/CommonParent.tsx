@@ -21,7 +21,8 @@ export type Message = {
 export const CommonParent = () => {
     const [showTokenBorders, setShowTokenBorders] = useState(false);
     const [showTokenPopovers, setShowTokenPopovers] = useState(false);
-    
+    const [temperature, setTemperature] = useState(0.7);
+
     // États partagés entre CommonParent et DialogBox
     const [messages, setMessages] = useState<Message[]>([]);
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -84,6 +85,7 @@ export const CommonParent = () => {
                                     currentConversationId={currentConversationId}
                                     setCurrentConversationId={setCurrentConversationId}
                                     currentProfileId={currentProfileId}
+                                    temperature={temperature}
                                 />
                                 <SidePanelRight
                                     setShowTokenBorders={setShowTokenBorders}
@@ -91,6 +93,8 @@ export const CommonParent = () => {
                                     showTokenBorders={showTokenBorders}
                                     showTokenPopovers={showTokenPopovers}
                                     changeProfile={resetChatWithProfil}
+                                    temperature={temperature}
+                                    setTemperature={setTemperature}
                                 />
                             </>
                         }

@@ -184,12 +184,11 @@ class Model:
             
             return probabilities
 
-    def generate_response_stream(self, prompt):
+    def generate_response_stream(self, prompt, temperature=0.7):
         """
         Generate streaming response from the language model with token probabilities
         """
         import json
-        import traceback
         import time
         import queue as _queue
 
@@ -221,7 +220,7 @@ class Model:
                 inputs=input_ids,
                 attention_mask=attention_mask,
                 max_new_tokens=512,
-                temperature=0.7,
+                temperature=temperature,
                 top_p=0.95,
                 do_sample=True,
                 streamer=streamer,
