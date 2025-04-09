@@ -37,7 +37,7 @@ def llm_response_stream(model, prompt, temperature):
     try:
         logger.info(f"Starting response generation for prompt: {prompt[:30]}...")  # Log the first part of the prompt
         for chunk in model.generate_response_stream(prompt):
-            logger.debug(f"Processing chunk: {chunk[:50]}...")  # Log the first part of the chunk for better tracking
+            logger.debug(f"Processing chunk: {chunk[:100]}...")  # Log the first part of the chunk for better tracking
             yield chunk
     except Exception as e:
         error_traceback = traceback.format_exc()

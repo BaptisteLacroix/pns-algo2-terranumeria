@@ -1,17 +1,17 @@
-from threading import Thread
-import logging
 import json
-import time
+import logging
 import queue as _queue
+import time
+from threading import Thread
 
 import torch
 import torch.nn.functional as F
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer, LogitsProcessor
 
-from env import HF_TOKEN
-from env import CACHE_DIR
 from conversation_manager import ConversationManager
+from env import CACHE_DIR
+from env import HF_TOKEN
 from profiles import get_profile_content
 
 logger = logging.getLogger("FlaskAppLogger")
@@ -22,15 +22,15 @@ class ProbabilityLogitsProcessor(LogitsProcessor):
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
         self.last_token_probabilities = []
-        
+
     def __call__(self, input_ids, scores):
         # Calcul des probabilités pour le token actuel (scores représente les logits pour ce token)
         # Applique softmax pour convertir les logits en probabilités
         probs = F.softmax(scores, dim=-1)
-        
+
         # Récupération des 5 tokens les plus probables
         top_probs, top_indices = torch.topk(probs, 5)
-        
+
         # Conversion en liste pour être facilement sérialisable en JSON
         probs_list = []
         for i in range(min(5, len(top_indices[0]))):
@@ -38,10 +38,10 @@ class ProbabilityLogitsProcessor(LogitsProcessor):
             prob = top_probs[0][i].item()
             token_text = self.tokenizer.decode([token_id])
             probs_list.append({"token": token_text, "probability": round(prob, 4)})
-        
+
         # Stockage des probabilités pour ce token spécifique
         self.last_token_probabilities = probs_list
-        
+
         # Important: ne pas modifier les scores pour ne pas affecter la génération
         return scores
 
@@ -78,7 +78,7 @@ class Model:
 
         self.conversation_manager = ConversationManager()
         self._current_conversation_id = self.conversation_manager.generate_conversation_id()
-        
+
         # Initialiser le processeur de logits pour les probabilités
         self.prob_processor = None
 
@@ -143,10 +143,10 @@ class Model:
                 torch_dtype=torch.float16,
                 cache_dir=CACHE_DIR,
                 offload_folder="offload",  # Specify a folder for disk offloading
-                offload_state_dict=True,   # Enable state dict offloading to save GPU memory
-                low_cpu_mem_usage=True     # Optimize CPU memory usage
+                offload_state_dict=True,  # Enable state dict offloading to save GPU memory
+                low_cpu_mem_usage=True  # Optimize CPU memory usage
             )
-            
+
             self.last_logits = None
 
             return model
@@ -158,7 +158,7 @@ class Model:
         Calcule les probabilités des tokens possibles pour la génération suivante
         """
         import torch.nn.functional as F
-        
+
         # Préparation des inputs
         with torch.no_grad():
             outputs = self.ai_model(
@@ -166,31 +166,28 @@ class Model:
                 attention_mask=attention_mask,
                 return_dict=True
             )
-            
+
             # Récupération des logits du dernier token
             logits = outputs.logits[:, -1, :]
             self.last_logits = logits.detach().clone()
-            
+
             # Application de softmax pour obtenir les probabilités
             probs = F.softmax(logits, dim=-1)
-            
+
             # Récupération des top 5 tokens les plus probables
             top_probs, top_indices = torch.topk(probs, 5)
-            
+
             probabilities = []
             for i, (token_id, prob) in enumerate(zip(top_indices[0].tolist(), top_probs[0].tolist())):
                 token_text = self.tokenizer.decode([token_id])
                 probabilities.append({"token": token_text, "probability": round(prob, 4)})
-            
+
             return probabilities
 
     def generate_response_stream(self, prompt, temperature=0.7):
         """
         Generate streaming response from the language model with token probabilities
         """
-        import json
-        import time
-        import queue as _queue
 
         if self.ai_model is None or self.tokenizer is None:
             json_error = json.dumps({"error": "Model not loaded correctly."})
@@ -205,10 +202,10 @@ class Model:
             tokenized_inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
             input_ids = tokenized_inputs["input_ids"]
             attention_mask = tokenized_inputs["attention_mask"]
-            
+
             # Create probability processor with fresh state
             self.prob_processor = ProbabilityLogitsProcessor(self.tokenizer)
-            
+
             # Setup streamer
             streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=900.0)
 
@@ -237,40 +234,37 @@ class Model:
             # Wait for generation to actually start before yielding
             time.sleep(0.5)
 
-            empty_tokens = 0
             response_text = ""
             try:
                 for chunk in streamer:
                     response_text += chunk
-                    
-                    # Si le chunk est vide, on incrémente le compteur
-                    if not chunk.strip():
-                        empty_tokens += 1
-                        # Si trop de tokens vides consécutifs, on peut choisir de ne pas les envoyer
-                        if empty_tokens > 3:
-                            continue
-                    else:
-                        # Réinitialisation si on a un token non vide
-                        empty_tokens = 0
 
                     current_probabilities = self.prob_processor.last_token_probabilities
-                    
+
+                    # Token with the probability the highest
+                    highest_prob_token = max(current_probabilities,
+                                             key=lambda x: x["probability"]) if current_probabilities else None
+                    # Check if the chunk contains a space and append it to the token
+                    token_text = highest_prob_token["token"] if highest_prob_token else ""
+                    # if the last character of chunk is a space
+                    if chunk and chunk[-1] == " ":
+                        token_text = " " + token_text
                     json_chunk = json.dumps({
-                        "token": chunk, 
-                        "probabilities": previous_token_probabilities
+                        "token": token_text,
+                        "probabilities": current_probabilities
                     })
-                    logger.debug(f"Sending chunk with token: '{chunk}' and {len(previous_token_probabilities)} probabilities")
                     yield f"data: {json_chunk}\n\n"
-                    
-                    previous_token_probabilities = current_probabilities
 
             except _queue.Empty:
                 logger.warning("Streamer queue empty, generation may have stalled")
                 if response_text:
-                    error_msg = json.dumps({"token": "\n\n[Generation timed out, but partial response retrieved]", "probabilities": []})
+                    error_msg = json.dumps(
+                        {"token": "\n\n[Generation timed out, but partial response retrieved]", "probabilities": []})
                     yield f"data: {error_msg}\n\n"
                 else:
-                    error_msg = json.dumps({"token": "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer.", "probabilities": []})
+                    error_msg = json.dumps(
+                        {"token": "Désolé, la génération de réponse a pris trop de temps. Veuillez réessayer.",
+                         "probabilities": []})
                     yield f"data: {error_msg}\n\n"
 
             if response_text:
@@ -282,7 +276,8 @@ class Model:
             import traceback
             error_traceback = traceback.format_exc()
             logger.error(f"Model generation error: {str(e)}\n{error_traceback}")
-            error_msg = json.dumps({"error": str(e), "token": f"Error generating response: {str(e)}", "probabilities": []})
+            error_msg = json.dumps(
+                {"error": str(e), "token": f"Error generating response: {str(e)}", "probabilities": []})
             yield f"data: {error_msg}\n\n"
 
     def format_prompt(self, prompt):
@@ -300,7 +295,7 @@ class Model:
         for entry in self.chat_history:
             role_tag = "<|" + entry["role"] + "|>"
             formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n" #TODO changer le nom assitant pour un meilleur role play
+        formatted_prompt += "<|assistant|>\n"  # TODO changer le nom assitant pour un meilleur role play
         return formatted_prompt
 
     def reset_memory(self):
@@ -321,7 +316,7 @@ class Model:
 
         # Génère un nouveau ID de conversation
         self._current_conversation_id = self.conversation_manager.generate_conversation_id()
-        
+
     def load_conversation_history(self, conversation_id):
         """Charge une conversation existante."""
         conversation_data = self.conversation_manager.load_conversation(conversation_id)
