@@ -157,6 +157,34 @@ Health check endpoint
 
 ---
 
+## 💻 Hardware Requirements
+
+To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
+
+**Backend:**
+
+- A computer running Python 3.6 or higher.
+- At least 8 GB of RAM; 16 GB or more is recommended for smoother operation.
+- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are used.
+
+**CUDA Acceleration (Optional):**
+
+For enhanced performance using NVIDIA's CUDA technology, the following additional requirements apply:
+
+- **GPU:** An NVIDIA CUDA-capable GPU with Compute Capability 3.0 or higher is required.
+
+    - *Minimum Recommendation:* NVIDIA GeForce GTX 1060 or equivalent.
+
+    - *Optimal Recommendation:* NVIDIA GeForce RTX 3060 or higher for improved performance.
+
+- **CUDA Toolkit:** Installation of the appropriate CUDA Toolkit version compatible with your GPU.
+
+- **Driver Compatibility:** Ensure that your NVIDIA drivers are up to date and compatible with the installed CUDA Toolkit version.
+
+These specifications will help ensure that TerraNumerIA operates effectively, with or without CUDA acceleration.
+
+---
+
 ## 🚀 Getting Started
 
 ### 🔧 Frontend
