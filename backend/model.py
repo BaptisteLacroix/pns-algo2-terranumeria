@@ -14,9 +14,7 @@ from conversation_manager import ConversationManager
 from profiles import get_profile_content
 
 HF_TOKEN = sys.argv[1]
-print("📌 Hugging Face token: ", HF_TOKEN)
 CACHE_DIR = sys.argv[2]
-print(f"📌 Cache directory: {CACHE_DIR}")
 
 logger = logging.getLogger("FlaskAppLogger")
 
