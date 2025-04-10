@@ -1,12 +1,15 @@
 # TerraNumerIA — Educational AI Text Generation Demo
 
-**A pedagogical web application developed during our 4th year at Polytech Nice Sophia, as part of the Algorithmique 2 course, within the [Terra Numerica](https://terra-numerica.org/) project.**
+**A pedagogical web application developed during our 4th year at Polytech Nice Sophia, as part of the Algorithmique 2
+course, within the [Terra Numerica](https://terra-numerica.org/) project.**
 
 --- 
 
 ## 📚 About the Project
 
-**TerraNumerIA** is an interactive educational platform designed to demystify how generative AI models like ChatGPT function. This tool allows middle and high school students to explore the inner workings of text generation through experimentation and demonstration.
+**TerraNumerIA** is an interactive educational platform designed to demystify how generative AI models like ChatGPT
+function. This tool allows middle and high school students to explore the inner workings of text generation through
+experimentation and demonstration.
 
 > 🤖 **AI isn't intelligent.**  
 > It doesn't think — it calculates probabilities. This project helps make that idea concrete.
@@ -15,7 +18,8 @@
 
 ## 🎓 Educational Goal and Objectives
 
-TerraNumerIA is designed to **demystify how generative AI works**, specifically focusing on Large Language Models (LLMs) like ChatGPT. Through playful human-led experiments and a custom AI demo, students learn that:
+TerraNumerIA is designed to **demystify how generative AI works**, specifically focusing on Large Language Models (LLMs)
+like ChatGPT. Through playful human-led experiments and a custom AI demo, students learn that:
 
 - Generative AIs **do not think**.
 - They generate words based on **mathematical probabilities**.
@@ -23,7 +27,8 @@ TerraNumerIA is designed to **demystify how generative AI works**, specifically 
 
 > 🧠 “It’s not intelligence, it’s math.”
 
-This project is presented in workshops for middle and high school students across France as part of the **"L’(in)intelligence des IA génératives"** activity. The workshop aims to:
+This project is presented in workshops for middle and high school students across France as part of the **"L’(in)
+intelligence des IA génératives"** activity. The workshop aims to:
 
 - Simplify and explain how large language models (LLMs) generate text.
 - Highlight the probabilistic nature of generative AI.
@@ -35,12 +40,15 @@ This project is presented in workshops for middle and high school students acros
 ## 🧪 Workshop Flow
 
 ### ✍️ Human Experimentation
+
 1. **Word-by-word sentence building** with limited context.
 2. Gradual reveal of more context to show its influence on coherence.
 3. Group reflection on how humans — and AIs — construct meaning without full understanding.
 
 ### 💻 AI Demonstration
+
 Participants then interact with our custom fine-tuned model via a friendly web UI. They can:
+
 - Enter prompts.
 - Observe how text is generated word-by-word.
 - Discuss differences between AI-generated and human-generated sentences.
@@ -54,6 +62,7 @@ Participants then interact with our custom fine-tuned model via a friendly web U
 A clean, simple web UI that interacts with the backend for live generation.
 
 #### Key Structure
+
 ```
 src/
 ├── components/            // UI blocks: side panels, dialog box, theme
@@ -115,6 +124,7 @@ Our backend wraps a fine-tuned generative model (e.g., based on Mistral) and exp
 All endpoints return JSON unless streaming.
 
 ### 🔄 `/responses`
+
 Generate text in streaming mode from a given prompt.
 
 - **POST**
@@ -124,6 +134,7 @@ Generate text in streaming mode from a given prompt.
 ---
 
 ### 💬 `/conversations`
+
 Get or delete conversation history.
 
 - **GET** `/conversations` → list all
@@ -133,6 +144,7 @@ Get or delete conversation history.
 ---
 
 ### 🧽 `/reset-memory`
+
 Reset model memory for a new session. Optionally change profile.
 
 - **POST**
@@ -141,6 +153,7 @@ Reset model memory for a new session. Optionally change profile.
 ---
 
 ### 👤 `/profiles`
+
 Manage generation profiles.
 
 - **GET** `/profiles` → list all
@@ -151,6 +164,7 @@ Manage generation profiles.
 ---
 
 ### ❤️ `/health`
+
 Health check endpoint
 
 - **GET** → `{ status: "ok" }`
@@ -159,13 +173,15 @@ Health check endpoint
 
 ## 💻 Hardware Requirements
 
-To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
+To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
+
 
 **Backend:**
 
 - A computer running Python 3.6 or higher.
 - At least 8 GB of RAM; 16 GB or more is recommended for smoother operation.
-- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are used.
+- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
+  used.
 
 **CUDA Acceleration (Optional):**
 
@@ -179,7 +195,8 @@ For enhanced performance using NVIDIA's CUDA technology, the following additiona
 
 - **CUDA Toolkit:** Installation of the appropriate CUDA Toolkit version compatible with your GPU.
 
-- **Driver Compatibility:** Ensure that your NVIDIA drivers are up to date and compatible with the installed CUDA Toolkit version.
+- **Driver Compatibility:** Ensure that your NVIDIA drivers are up to date and compatible with the installed CUDA
+  Toolkit version.
 
 These specifications will help ensure that TerraNumerIA operates effectively, with or without CUDA acceleration.
 
@@ -210,33 +227,84 @@ Make sure your browser allows local file access if running from `index.html`.
 
 ### 🐍 Backend
 
-To run the backend, just install the required dependencies and run the server:
+To ensure the proper functioning of TerraNumerIA, users need to set up specific credentials and environment variables.
+These configurations are essential for authenticating access to necessary resources and managing data storage locations.
+
+Certainly! To incorporate the recent changes regarding hardware requirements and the handling of credentials, please
+update the README as follows:
+
+---
+
+## 💻 Hardware Requirements
+
+To ensure TerraNumerIA operates smoothly, please verify your system meets the following requirements:
+
+- **Frontend:**
+    - A modern web browser such as Chrome, Firefox, Safari, or Edge.
+    - Screen resolution of at least 1024x768 for proper display of the interface.
+    - An active internet connection if running in development mode.
+
+- **Backend:**
+    - **Minimum Requirements:**
+        - A computer running Python 3.6 or higher.
+        - At least 2GB of RAM.
+        - A recent multi-core CPU.
+    - **Recommended Requirements:**
+        - At least 4GB of RAM for smoother operation.
+        - An NVIDIA GPU compatible with CUDA for enhanced performance during AI model inference.
+
+These specifications are generally met by most modern laptops and desktop computers. However, utilizing an NVIDIA GPU
+will significantly improve the performance of AI-related tasks.
+
+---
+
+## 🔑 Running the Backend with Credentials
+
+Before launching the backend server, make sure to install dependencies and provide the required credentials as
+command-line arguments.
 
 ```bash
 cd backend/
 pip install -r requirements.txt
-python -m main
+python -m main <HF_TOKEN> <CACHE_DIR>
 ```
 
-This will launch the Flask API server locally. Make sure your frontend (in development or build mode) is configured to call the backend (e.g., `http://localhost:5000`).
+Where:
 
-Thanks! Here's the revised **🌍 Context** section reflecting your course, goals, and TerraNumerica's background:
+- `<HF_TOKEN>`: Your **Hugging Face API token**.
+- `<CACHE_DIR>`: The directory path where cached models and data will be stored.
+
+You can obtain your Hugging Face token by creating a free account at [huggingface.co](https://huggingface.co/) and
+generating one from your account settings.
+
+This setup ensures secure and local model loading. Once launched, your Flask API server will run locally. Make sure your
+frontend (dev or built version) is configured to call the backend, usually at:
+
+```
+http://localhost:5000
+```
 
 ---
 
 ## 🌍 Context
 
-This project was developed as part of the **Algorithmique 2 course** during our 4th year at **Polytech Nice Sophia**. It was created with the objective of explaining how generative AI works to a wide audience — from middle school students to university graduates.
+This project was developed as part of the **Algorithmique 2 course** during our 4th year at **Polytech Nice Sophia**. It
+was created with the objective of explaining how generative AI works to a wide audience — from middle school students to
+university graduates.
 
-We built the application **at the TerraNumerica office** in Sophia Antipolis, and it is now used as part of **interactive educational workshops** to help the public understand the principles behind text-generating AIs like ChatGPT.
+We built the application **at the TerraNumerica office** in Sophia Antipolis, and it is now used as part of *
+*interactive educational workshops** to help the public understand the principles behind text-generating AIs like
+ChatGPT.
 
 > The key aim: **make the invisible mechanisms of AI visible, understandable, and accessible** to everyone.
 
 ### 🧩 About Terra Numerica
 
-**[Terra Numerica](https://terra-numerica.org/)** is a national project initiated by the **CNRS**, **Inria**, and **Université Côte d’Azur**. Its goal is to provide all citizens with access to high-quality digital culture experiences.
+**[Terra Numerica](https://terra-numerica.org/)** is a national project initiated by the **CNRS**, **Inria**, and *
+*Université Côte d’Azur**. Its goal is to provide all citizens with access to high-quality digital culture experiences.
 
-The project brings together a wide range of partners — including the French Ministry of Education — and offers **interactive, hands-on digital science activities**. These include:
+The project brings together a wide range of partners — including the French Ministry of Education — and offers *
+*interactive, hands-on digital science activities**. These include:
 
 - The **Terra Numerica @Sophia** totem space
 - A network of **partner spaces** throughout the South of France
@@ -254,7 +322,8 @@ Through playful and engaging approaches, Terra Numerica promotes:
 
 ## 📢 Disclaimer
 
-This tool is intended **only for educational purposes**. It does not produce reliable or accurate information and must not be used in critical or production contexts.
+This tool is intended **only for educational purposes**. It does not produce reliable or accurate information and must
+not be used in critical or production contexts.
 
 > The model does **not think** or **understand** — it generates text based on probabilities. Just math, not magic.
 
@@ -270,7 +339,7 @@ This tool is intended **only for educational purposes**. It does not produce rel
 
 ## 📎 License
 
-MIT License (or indicate if otherwise).  
+MIT License.  
 Content under pedagogical license © TerraNumerica.
 
 ---

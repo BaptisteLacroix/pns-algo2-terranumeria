@@ -1,6 +1,7 @@
 import json
 import logging
 import queue as _queue
+import sys
 import time
 from threading import Thread
 
@@ -10,9 +11,12 @@ from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer, LogitsProcessor
 
 from conversation_manager import ConversationManager
-from env import CACHE_DIR
-from env import HF_TOKEN
 from profiles import get_profile_content
+
+HF_TOKEN = sys.argv[1]
+print("📌 Hugging Face token: ", HF_TOKEN)
+CACHE_DIR = sys.argv[2]
+print(f"📌 Cache directory: {CACHE_DIR}")
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -65,7 +69,7 @@ class Model:
         print(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
         self.tokenizer = None
-        # self.login_hugging_face()
+        self.login_hugging_face()
         self.ai_model = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
             print(f"✅ Model {self.model_name} loaded successfully")
@@ -105,7 +109,6 @@ class Model:
 
     @staticmethod
     def login_hugging_face():
-        # Login to Hugging Face
         try:
             login(token=HF_TOKEN)
             print("✅ Successfully logged in to Hugging Face")
