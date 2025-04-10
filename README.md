@@ -45,6 +45,81 @@ Through playful and engaging approaches, Terra Numerica promotes:
 
 > Over **120,000 people** have already participated in Terra Numerica’s activities across France.
 
+## 💻 Hardware Requirements
+
+To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
+
+**Backend:**
+
+- A computer running Python 3.12 or higher.
+- At least 16 GB of RAM;
+- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
+  used.
+
+**CUDA Acceleration (Optional):**
+
+For enhanced performance using NVIDIA's CUDA technology, the following additional requirements apply:
+
+- **GPU:** An NVIDIA CUDA-capable GPU with Compute Capability 3.0 or higher is required.
+
+- _Minimum Recommendation:_ NVIDIA GeForce GTX 1060 or equivalent.
+
+- _Optimal Recommendation:_ NVIDIA GeForce RTX 3060 or higher for improved performance.
+
+- **CUDA Toolkit:** Installation of the appropriate CUDA Toolkit version compatible with your GPU.
+
+- **Driver Compatibility:** Ensure that your NVIDIA drivers are up to date and compatible with the installed CUDA
+  Toolkit version.
+
+These specifications will help ensure that TerraNumerIA operates effectively, with or without CUDA acceleration.
+
+## 🚀 Getting Started
+
+### 🔧 Frontend
+
+You can run the frontend in two ways:
+
+- **Development mode** (with hot reload):
+  ```bash
+  cd frontend/
+  npm install
+  npm run dev
+  ```
+
+- **Static build mode** (no server needed):  
+  Simply open the `frontend/dist/index.html` file in your browser after building with:
+  ```bash
+  npm run build
+  ```
+
+Make sure your browser allows local file access if running from `index.html`.
+
+### 🐍 Backend
+
+Before launching the backend server, make sure to install dependencies and provide the required credentials as
+command-line arguments.
+
+```bash
+cd backend/
+pip install -r requirements.txt
+python -m main <HF_TOKEN> <CACHE_DIR>
+```
+
+Where:
+
+- `<HF_TOKEN>`: Your **Hugging Face API token**.
+- `<CACHE_DIR>`: The directory path where cached models and data will be stored.
+
+You can obtain your Hugging Face token by creating a free account at [huggingface.co](https://huggingface.co/) and
+generating one from your account settings.
+
+This setup ensures secure and local model loading. Once launched, your Flask API server will run locally. Make sure your
+frontend (dev or built version) is configured to call the backend, usually at:
+
+```
+http://localhost:5000
+```
+
 ## 🎓 Educational Goal and Objectives
 
 TerraNumerIA is designed to **demystify how generative AI works**, specifically focusing on Large Language Models (LLMs)
@@ -138,8 +213,6 @@ Our backend wraps a fine-tuned generative model (e.g., based on Mistral) and exp
 - `conversations/`: Session save files (JSON)
 - `requirements.txt`: Python dependencies
 
----
-
 ## 📡 API Overview
 
 All endpoints return JSON unless streaming.
@@ -181,113 +254,6 @@ Manage generation profiles.
 Health check endpoint
 
 - **GET** → `{ status: "ok" }`
-
-## 💻 Hardware Requirements
-
-To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
-
-**Backend:**
-
-- A computer running Python 3.12 or higher.
-- At least 8 GB of RAM; 16 GB or more is recommended for smoother operation.
-- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
-  used.
-
-**CUDA Acceleration (Optional):**
-
-For enhanced performance using NVIDIA's CUDA technology, the following additional requirements apply:
-
-- **GPU:** An NVIDIA CUDA-capable GPU with Compute Capability 3.0 or higher is required.
-
-- _Minimum Recommendation:_ NVIDIA GeForce GTX 1060 or equivalent.
-
-- _Optimal Recommendation:_ NVIDIA GeForce RTX 3060 or higher for improved performance.
-
-- **CUDA Toolkit:** Installation of the appropriate CUDA Toolkit version compatible with your GPU.
-
-- **Driver Compatibility:** Ensure that your NVIDIA drivers are up to date and compatible with the installed CUDA
-  Toolkit version.
-
-These specifications will help ensure that TerraNumerIA operates effectively, with or without CUDA acceleration.
-
-## 🚀 Getting Started
-
-### 🔧 Frontend
-
-You can run the frontend in two ways:
-
-- **Development mode** (with hot reload):
-  ```bash
-  cd frontend/
-  npm install
-  npm run dev
-  ```
-
-- **Static build mode** (no server needed):  
-  Simply open the `frontend/dist/index.html` file in your browser after building with:
-  ```bash
-  npm run build
-  ```
-
-Make sure your browser allows local file access if running from `index.html`.
-
-### 🐍 Backend
-
-To ensure the proper functioning of TerraNumerIA, users need to set up specific credentials and environment variables.
-These configurations are essential for authenticating access to necessary resources and managing data storage locations.
-
-Certainly! To incorporate the recent changes regarding hardware requirements and the handling of credentials, please
-update the README as follows:
-
----
-
-## 💻 Hardware Requirements
-
-To ensure TerraNumerIA operates smoothly, please verify your system meets the following requirements:
-
-- **Frontend:**
-    - A modern web browser such as Chrome, Firefox, Safari, or Edge.
-    - Screen resolution of at least 1024x768 for proper display of the interface.
-    - An active internet connection if running in development mode.
-
-- **Backend:**
-    - **Minimum Requirements:**
-        - A computer running Python 3.6 or higher.
-        - At least 16GB of RAM.
-        - A recent multi-core CPU.
-    - **Recommended Requirements:**
-        - An NVIDIA GPU compatible with CUDA for enhanced performance during AI model inference.
-
-These specifications are generally met by most modern laptops and desktop computers. However, utilizing an NVIDIA GPU
-will significantly improve the performance of AI-related tasks.
-
----
-
-## 🔑 Running the Backend with Credentials
-
-Before launching the backend server, make sure to install dependencies and provide the required credentials as
-command-line arguments.
-
-```bash
-cd backend/
-pip install -r requirements.txt
-python -m main <HF_TOKEN> <CACHE_DIR>
-```
-
-Where:
-
-- `<HF_TOKEN>`: Your **Hugging Face API token**.
-- `<CACHE_DIR>`: The directory path where cached models and data will be stored.
-
-You can obtain your Hugging Face token by creating a free account at [huggingface.co](https://huggingface.co/) and
-generating one from your account settings.
-
-This setup ensures secure and local model loading. Once launched, your Flask API server will run locally. Make sure your
-frontend (dev or built version) is configured to call the backend, usually at:
-
-```
-http://localhost:5000
-```
 
 ## 📢 Disclaimer
 
