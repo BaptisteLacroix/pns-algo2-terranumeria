@@ -20,16 +20,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
             />
             <div className="flex flex-col justify-between h-full px-4">
                 <div className="flex flex-col">
-                    <div className="flex flex-col mb-6">
-                        <Link
-                            href={"/history"}
-                            isBlock
-                            color={undefined}
-                            className="bg-gray-50 hover:bg-yellow rounded-md transition-colors text-darkblue font-semibold text-lg py-2 px-4 block mb-2"
-                        >
-                            Historique des conversations
-                        </Link>
-                    </div>
+                    
                     <h1 className="text-2xl font-bold text-primary mb-4 px-2">
                         Documentation
                     </h1>
@@ -45,7 +36,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                                     L'entraînement
                                 </Link>
                             </li>
-                            <li className="hover:bg-yellow rounded-md transition-colors">
+                            <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
                                     href="#"
                                     isBlock
@@ -55,7 +46,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                                     Les biais
                                 </Link>
                             </li>
-                            <li className="hover:bg-yellow rounded-md transition-colors">
+                            <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
                                     href="#"
                                     isBlock
@@ -65,7 +56,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                                     La véracité
                                 </Link>
                             </li>
-                            <li className="hover:bg-yellow rounded-md transition-colors">
+                            <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
                                     href="#"
                                     isBlock
@@ -75,7 +66,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                                     Les mathématiques
                                 </Link>
                             </li>
-                            <li className="hover:bg-yellow rounded-md transition-colors">
+                            <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
                                     href="#"
                                     isBlock
@@ -101,6 +92,16 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                 >
                     Nouvelle conversation
                 </Button>
+                <div className="flex flex-col mb-6">
+                        <Link
+                            href={"/history"}
+                            isBlock
+                            color={undefined}
+                            className="bg-gray-50 hover:bg-yellow rounded-none transition-colors text-darkblue font-semibold text-lg py-2 px-4 block mb-2"
+                        >
+                            Historique des conversations
+                        </Link>
+                    </div>
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-bold text-primary p-2">
                         Credits

@@ -289,10 +289,10 @@ export const DialogBox = ({
             {/* En-tête avec l'ID de conversation et le profil */}
             {currentConversationId && (
                 <div className="px-10 mb-2">
-                    <div className="bg-blue-50 text-blue-700 py-2 px-3 rounded-md text-sm flex justify-between items-center">
+                    <div className="bg-blue-50 text-blue-700 py-2 px-3  text-sm flex justify-between items-center">
                         <span>Conversation en cours: {currentConversationId}</span>
                         {currentProfile && (
-                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
+                            <span className="bg-green-100 text-green-700 px-2 py-1 text-xs">
                                 Profil: {currentProfile.name}
                             </span>
                         )}
@@ -305,7 +305,7 @@ export const DialogBox = ({
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex w-full ${msg.isUser ? "justify-end" : "justify-start"}`}>
                         <div
-                            className={`max-w-xl p-3 rounded-lg break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
+                            className={`max-w-xl p-3 break-words ${msg.isUser ? "bg-primary text-white" : "bg-gray-200 text-black"}`}>
                             {!showTokenBorders && !showTokenPopovers ? (
                                 // Rendu du texte complet sans afficher les tokens individuels
                                 <div className="prose prose-sm max-w-none mt-2">
@@ -336,7 +336,7 @@ export const DialogBox = ({
                 {/* Indicateur de chargement */}
                 {isLoading && (
                     <div className="flex w-full justify-start">
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-200">
+                        <div className="flex items-center gap-2 p-3 bg-gray-200">
                             <Spinner size="sm" color="primary"/>
                             <span className="text-sm text-gray-600">Terra NumerIA réfléchit...</span>
                         </div>

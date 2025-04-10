@@ -119,7 +119,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
     const renderProfileItem = (id: string, profile: Profile, currentProfileId: string) => (
         <div
             key={id}
-            className={`p-2 rounded-md cursor-pointer transition-colors flex flex-col items-center
+            className={`p-2 rounded-none  cursor-pointer transition-colors flex flex-col items-center
         ${currentProfileId === id
                 ? 'bg-blue-100 border border-blue-300'
                 : 'hover:bg-gray-100 border border-transparent'}`}
@@ -155,7 +155,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                 <div className="mt-2">
                     {/* Profil actuel mis en évidence */}
                     {currentProfile && (
-                        <div className="mb-4 p-3 bg-blue-50 rounded-md border-l-4 border-blue-500 flex items-center">
+                        <div className="mb-4 p-3 bg-blue-50 rounded-none  border-l-4 border-blue-500 flex items-center">
                             <Avatar
                                 src={`/profiles/${currentProfile.id}.png`}
                                 alt={currentProfile.name}
@@ -264,7 +264,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                 onChange={handleTemperatureChange}
                             />
                             <Tooltip content={
-                                <div className="p-3 bg-gray-800 text-white rounded-md shadow-lg w-64">
+                                <div className="p-3 bg-gray-800 text-white rounded-none  shadow-lg w-64">
                                     <div className="mb-2">
                                         <strong className="text-lg">Température</strong>
                                     </div>
@@ -303,7 +303,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                 onChange={handleTopPChange}
                             />
                             <Tooltip content={
-                                <div className="p-3 bg-gray-800 text-white rounded-md shadow-lg w-64">
+                                <div className="p-3 bg-gray-800 text-white rounded-none  shadow-lg w-64">
                                     <div className="mb-2">
                                         <strong className="text-lg">Top-p</strong>
                                     </div>
