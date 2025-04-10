@@ -1,25 +1,26 @@
 import {Image, Spacer, Link, Button} from "@heroui/react";
+import {AvatarCredit} from "@/components/AvatarCredit.tsx";
 
 export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
-  callResetChat,
-}) => {
-  return (
-    <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
-      <Spacer y={4} />
-      <Image
-        alt="heroui logo"
-        src="/logo.png"
-        className="rounded-none cursor-pointer mx-auto mb-6"
-        onClick={() => {
-            callResetChat();
-            // Change the Route to /
-            window.location.href = "/";
-        }}
+                                                                           callResetChat,
+                                                                       }) => {
+    return (
+        <div className="flex flex-col h-screen w-1/6 bg-white shadow-lg pb-4">
+            <Spacer y={4}/>
+            <Image
+                alt="heroui logo"
+                src="/logo.png"
+                className="rounded-none cursor-pointer mx-auto mb-6"
+                onClick={() => {
+                    callResetChat();
+                    // Change the Route to /
+                    window.location.href = "/";
+                }}
 
-      />
-      <div className="flex flex-col justify-between h-full px-4">
-        <div className="flex flex-col">
-            <div className="flex flex-col mb-6">
+            />
+            <div className="flex flex-col justify-between h-full px-4">
+                <div className="flex flex-col">
+                    <div className="flex flex-col mb-6">
                         <Link
                             href={"/history"}
                             isBlock
@@ -100,6 +101,25 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                 >
                     Nouvelle conversation
                 </Button>
+                <div className="flex flex-col">
+                    <h1 className="text-2xl font-bold text-primary p-2">
+                        Credits
+                    </h1>
+                    <div className="bg-gray-50">
+                        <AvatarCredit
+                            name={'Baptiste LACROIX'}
+                            githubUser={'BaptisteLacroix'}
+                        />
+                        <AvatarCredit
+                            name={'Antoine FADDA RODRIGUEZ'}
+                            githubUser={'Antoine-FdRg'}
+                        />
+                        <AvatarCredit
+                            name={'Océan RAZAFIARISON'}
+                            githubUser={'Fascinax'}
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );
