@@ -3,18 +3,47 @@
 **A pedagogical web application developed during our 4th year at Polytech Nice Sophia, as part of the Algorithmique 2
 course, within the [Terra Numerica](https://terra-numerica.org/) project.**
 
---- 
-
 ## 📚 About the Project
 
 **TerraNumerIA** is an interactive educational platform designed to demystify how generative AI models like ChatGPT
 function. This tool allows middle and high school students to explore the inner workings of text generation through
 experimentation and demonstration.
 
-> 🤖 **AI isn't intelligent.**  
+> 🤖 **AI isn't intelligent.**
+
 > It doesn't think — it calculates probabilities. This project helps make that idea concrete.
 
----
+## 🌍 Context
+
+This project was developed as part of the **Algorithmique 2 course** during our 4th year at **Polytech Nice Sophia**. It
+was created with the objective of explaining how generative AI works to a wide audience — from middle school students to
+university graduates.
+
+We built the application **at the TerraNumerica office** in Sophia Antipolis, and it is now used as part of *
+*interactive educational workshops** to help the public understand the principles behind text-generating AIs like
+ChatGPT.
+
+> The key aim: **make the invisible mechanisms of AI visible, understandable, and accessible** to everyone.
+
+### 🧩 About Terra Numerica
+
+**[Terra Numerica](https://terra-numerica.org/)** is a national project initiated by the **CNRS**, **Inria**, and *
+*Université Côte d’Azur**. Its goal is to provide all citizens with access to high-quality digital culture experiences.
+
+The project brings together a wide range of partners — including the French Ministry of Education — and offers *
+*interactive, hands-on digital science activities**. These include:
+
+- The **Terra Numerica @Sophia** totem space
+- A network of **partner spaces** throughout the South of France
+- Online and on-site **learning resources** and **events**
+
+Through playful and engaging approaches, Terra Numerica promotes:
+
+- Digital literacy for all audiences
+- Scientific curiosity and critical thinking
+- Understanding of the societal, ethical, and technical dimensions of digital technologies
+
+> Over **120,000 people** have already participated in Terra Numerica’s activities across France.
 
 ## 🎓 Educational Goal and Objectives
 
@@ -35,8 +64,6 @@ intelligence des IA génératives"** activity. The workshop aims to:
 - Compare human and machine language generation.
 - Foster critical thinking about AI's role and limitations.
 
----
-
 ## 🧪 Workshop Flow
 
 ### ✍️ Human Experimentation
@@ -52,8 +79,6 @@ Participants then interact with our custom fine-tuned model via a friendly web U
 - Enter prompts.
 - Observe how text is generated word-by-word.
 - Discuss differences between AI-generated and human-generated sentences.
-
----
 
 ## 🧩 Application Structure
 
@@ -78,8 +103,6 @@ src/
 - 🕓 Conversation history display
 - 📚 Learning page with pedagogical explanations
 
----
-
 ### 📖 Interactive Learning Panel
 
 The sidebar provides access to **educational content** through clearly labeled navigation.
@@ -101,8 +124,6 @@ This panel helps structure the experience and guide the user between interactive
     - **La véracité** – When and why the model "hallucinates" facts.
     - **Les mathématiques** – The underlying probability-driven logic.
     - **L'espace vectoriel** – Vector spaces and word embeddings.
-
----
 
 ### 🧠 Backend — Flask API + Custom Model
 
@@ -131,8 +152,6 @@ Generate text in streaming mode from a given prompt.
 - Payload: `{ prompt, model?, temperature?, conversation_id?, profile_id? }`
 - Returns: `text/event-stream`
 
----
-
 ### 💬 `/conversations`
 
 Get or delete conversation history.
@@ -141,16 +160,12 @@ Get or delete conversation history.
 - **GET** `/conversations/<id>` → specific one
 - **DELETE** `/conversations/<id>` → delete one
 
----
-
 ### 🧽 `/reset-memory`
 
 Reset model memory for a new session. Optionally change profile.
 
 - **POST**
 - Payload: `{ profile_id? }`
-
----
 
 ### 👤 `/profiles`
 
@@ -161,20 +176,15 @@ Manage generation profiles.
 - **POST** `/profiles/change`  
   Payload: `{ profile_id }`
 
----
-
 ### ❤️ `/health`
 
 Health check endpoint
 
 - **GET** → `{ status: "ok" }`
 
----
-
 ## 💻 Hardware Requirements
 
 To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
-
 
 **Backend:**
 
@@ -189,9 +199,9 @@ For enhanced performance using NVIDIA's CUDA technology, the following additiona
 
 - **GPU:** An NVIDIA CUDA-capable GPU with Compute Capability 3.0 or higher is required.
 
-    - *Minimum Recommendation:* NVIDIA GeForce GTX 1060 or equivalent.
+- _Minimum Recommendation:_ NVIDIA GeForce GTX 1060 or equivalent.
 
-    - *Optimal Recommendation:* NVIDIA GeForce RTX 3060 or higher for improved performance.
+- _Optimal Recommendation:_ NVIDIA GeForce RTX 3060 or higher for improved performance.
 
 - **CUDA Toolkit:** Installation of the appropriate CUDA Toolkit version compatible with your GPU.
 
@@ -199,8 +209,6 @@ For enhanced performance using NVIDIA's CUDA technology, the following additiona
   Toolkit version.
 
 These specifications will help ensure that TerraNumerIA operates effectively, with or without CUDA acceleration.
-
----
 
 ## 🚀 Getting Started
 
@@ -222,8 +230,6 @@ You can run the frontend in two ways:
   ```
 
 Make sure your browser allows local file access if running from `index.html`.
-
----
 
 ### 🐍 Backend
 
@@ -284,42 +290,6 @@ frontend (dev or built version) is configured to call the backend, usually at:
 http://localhost:5000
 ```
 
----
-
-## 🌍 Context
-
-This project was developed as part of the **Algorithmique 2 course** during our 4th year at **Polytech Nice Sophia**. It
-was created with the objective of explaining how generative AI works to a wide audience — from middle school students to
-university graduates.
-
-We built the application **at the TerraNumerica office** in Sophia Antipolis, and it is now used as part of *
-*interactive educational workshops** to help the public understand the principles behind text-generating AIs like
-ChatGPT.
-
-> The key aim: **make the invisible mechanisms of AI visible, understandable, and accessible** to everyone.
-
-### 🧩 About Terra Numerica
-
-**[Terra Numerica](https://terra-numerica.org/)** is a national project initiated by the **CNRS**, **Inria**, and *
-*Université Côte d’Azur**. Its goal is to provide all citizens with access to high-quality digital culture experiences.
-
-The project brings together a wide range of partners — including the French Ministry of Education — and offers *
-*interactive, hands-on digital science activities**. These include:
-
-- The **Terra Numerica @Sophia** totem space
-- A network of **partner spaces** throughout the South of France
-- Online and on-site **learning resources** and **events**
-
-Through playful and engaging approaches, Terra Numerica promotes:
-
-- Digital literacy for all audiences
-- Scientific curiosity and critical thinking
-- Understanding of the societal, ethical, and technical dimensions of digital technologies
-
-> Over **120,000 people** have already participated in Terra Numerica’s activities across France.
-
---- 
-
 ## 📢 Disclaimer
 
 This tool is intended **only for educational purposes**. It does not produce reliable or accurate information and must
@@ -327,19 +297,17 @@ not be used in critical or production contexts.
 
 > The model does **not think** or **understand** — it generates text based on probabilities. Just math, not magic.
 
----
-
 ## Team Members
 
 - [Baptiste LACROIX](https://github.com/BaptisteLacroix)
 - [Antoine FADDA RODRIGUEZ](https://github.com/Antoine-FdRg)
 - [Océan RAZAFIARISON](https://github.com/Fascinax)
 
----
+## License
 
-## 📎 License
-
-MIT License.  
-Content under pedagogical license © TerraNumerica.
-
----
+This project is licensed under the MIT License.
+It uses
+a [fine-tuned version](https://huggingface.co/Faradaylab/ARIA-7B-V3-mistral-french) [by Faradaylab](https://huggingface.co/Faradaylab)
+of the [Mistral 7B Instruct](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1) model, which is released under
+the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+Please refer to the original model license for usage and redistribution terms.
