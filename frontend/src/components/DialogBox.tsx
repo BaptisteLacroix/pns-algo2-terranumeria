@@ -312,6 +312,17 @@ export const DialogBox = ({
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm, remarkMath]}
                                         rehypePlugins={[rehypeRaw, rehypeKatex]}
+                                        components={{
+                                            p: ({node, ...props}) => (
+                                                <p {...props} style={{color: msg.isUser ? "white" : "black"}} />
+                                            ),
+                                            span: ({node, ...props}) => (
+                                                <span {...props} style={{color: msg.isUser ? "white" : "black"}} />
+                                            ),
+                                            li: ({node, ...props}) => (
+                                                <li {...props} style={{color: msg.isUser ? "white" : "black"}} />   
+                                            ),
+                                        }}
                                     >
                                         {msg.tokens.map((token) => token.token).join('')}
                                     </ReactMarkdown>
