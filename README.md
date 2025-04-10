@@ -188,7 +188,7 @@ To ensure optimal performance of TerraNumerIA, please verify that your system me
 
 **Backend:**
 
-- A computer running Python 3.6 or higher.
+- A computer running Python 3.12 or higher.
 - At least 8 GB of RAM; 16 GB or more is recommended for smoother operation.
 - A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
   used.
@@ -253,10 +253,9 @@ To ensure TerraNumerIA operates smoothly, please verify your system meets the fo
 - **Backend:**
     - **Minimum Requirements:**
         - A computer running Python 3.6 or higher.
-        - At least 2GB of RAM.
+        - At least 16GB of RAM.
         - A recent multi-core CPU.
     - **Recommended Requirements:**
-        - At least 4GB of RAM for smoother operation.
         - An NVIDIA GPU compatible with CUDA for enhanced performance during AI model inference.
 
 These specifications are generally met by most modern laptops and desktop computers. However, utilizing an NVIDIA GPU
