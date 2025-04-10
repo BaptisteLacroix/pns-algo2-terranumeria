@@ -32,14 +32,14 @@ logger.info("All models are loaded")
 conversation_manager = ConversationManager()
 
 
-def llm_response_stream(model, prompt, temperature):
+def llm_response_stream(model, prompt, temperature, topP):
     """
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
     """
     try:
         logger.info(f"Starting response generation for prompt: {prompt[:30]}...")  # Log the first part of the prompt
-        for chunk in model.generate_response_stream(prompt):
+        for chunk in model.generate_response_stream(prompt, temperature, topP):
             logger.debug(f"Processing chunk: {chunk[:100]}...")  # Log the first part of the chunk for better tracking
             yield chunk
     except Exception as e:
@@ -62,6 +62,7 @@ def llm_completions():
         prompt = data.get('prompt', '')
         model = data.get('model', 'mistral')
         temperature = data.get('temperature', 0.7)
+        topP = data.get('topP', 0.1)
         conversation_id = data.get('conversation_id', None)
         profile_id = data.get('profile_id', None)  # Nouveau: profile_id pour choisir un profil
 
@@ -88,7 +89,7 @@ def llm_completions():
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream(mistral_model, prompt, temperature), content_type='text/event-stream',
+        return Response(llm_response_stream(mistral_model, prompt, temperature, topP), content_type='text/event-stream',
                         status=200)
 
     except Exception as e:

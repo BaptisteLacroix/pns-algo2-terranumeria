@@ -94,6 +94,7 @@ type DialogBoxProps = {
     setCurrentConversationId: React.Dispatch<React.SetStateAction<string | null>>;
     currentProfileId: string | null;
     temperature: number;
+    topP: number;
 };
 
 // Composant principal
@@ -106,6 +107,7 @@ export const DialogBox = ({
     setCurrentConversationId,
     currentProfileId,
     temperature,
+    topP,
 }: DialogBoxProps) => {
     // États locaux
     const [message, setMessage] = useState("");
@@ -210,6 +212,7 @@ export const DialogBox = ({
                 enrichedMessage,
                 "mistral",
                 temperature,
+                topP,
                 currentConversationId || undefined,
                 currentProfileId || undefined,
             );

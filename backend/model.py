@@ -154,38 +154,7 @@ class Model:
         except Exception as e:
             print(f"❌ Error loading model or tokenizer: {e}")
 
-    def compute_token_probabilities(self, input_ids, attention_mask, next_token=None):
-        """
-        Calcule les probabilités des tokens possibles pour la génération suivante
-        """
-        import torch.nn.functional as F
-
-        # Préparation des inputs
-        with torch.no_grad():
-            outputs = self.ai_model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                return_dict=True
-            )
-
-            # Récupération des logits du dernier token
-            logits = outputs.logits[:, -1, :]
-            self.last_logits = logits.detach().clone()
-
-            # Application de softmax pour obtenir les probabilités
-            probs = F.softmax(logits, dim=-1)
-
-            # Récupération des top 5 tokens les plus probables
-            top_probs, top_indices = torch.topk(probs, 5)
-
-            probabilities = []
-            for i, (token_id, prob) in enumerate(zip(top_indices[0].tolist(), top_probs[0].tolist())):
-                token_text = self.tokenizer.decode([token_id])
-                probabilities.append({"token": token_text, "probability": round(prob, 4)})
-
-            return probabilities
-
-    def generate_response_stream(self, prompt, temperature=0.7):
+    def generate_response_stream(self, prompt, temperature=0.7, topP=0.1):
         """
         Generate streaming response from the language model with token probabilities
         """
@@ -210,16 +179,13 @@ class Model:
             # Setup streamer
             streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=900.0)
 
-            # Variable pour stocker les probabilités du token précédent
-            previous_token_probabilities = []
-
             # Configure generation with logits processor for probabilities
             generation_kwargs = dict(
                 inputs=input_ids,
                 attention_mask=attention_mask,
                 max_new_tokens=512,
                 temperature=temperature,
-                top_p=0.95,
+                top_p=topP,
                 do_sample=True,
                 streamer=streamer,
                 logits_processor=[self.prob_processor],
