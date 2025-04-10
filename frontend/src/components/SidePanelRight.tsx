@@ -280,7 +280,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                     </div>
                                 </div>
                             } placement="top">
-      <span className="text-xs text-gray-500 cursor-help w-full block">
+      <span className="text-xs text-gray-500 cursor-help w-full inline">
         ⓘ
       </span>
                             </Tooltip>
@@ -320,7 +320,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                     </div>
                                 </div>
                             } placement="top">
-      <span className="text-xs text-gray-500 cursor-help w-full block">
+      <span className="text-xs text-gray-500 cursor-help w-full inline">
         ⓘ
       </span>
                             </Tooltip>
