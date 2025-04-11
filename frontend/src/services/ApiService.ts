@@ -39,7 +39,7 @@ export const ApiService = {
             throw new Error(`Erreur lors de la récupération des conversations: ${response.status}`);
         }
         const data = await response.json();
-        
+
         // Formater les dates
         return data.conversations.map((conv: any) => ({
             ...conv,
@@ -69,32 +69,33 @@ export const ApiService = {
     },
 
     // Réponses et messages
-    sendMessage: async (prompt: string, model: string = "mistral", temperature: number, conversationId?: string, profileId?: string) => {
+    sendMessage: async (prompt: string, model: string = "mistral", temperature: number, topP: number, conversationId?: string, profileId?: string) => {
         const requestBody: Record<string, any> = {
             prompt,
             model
         };
 
         requestBody.temperature = temperature;
-        
+        requestBody.topP = topP;
+
         if (conversationId) {
             requestBody.conversation_id = conversationId;
         }
-        
+
         if (profileId && !conversationId) {
             requestBody.profile_id = profileId;
         }
-        
+
         const response = await fetch(`${API_BASE_URL}/responses`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify(requestBody),
         });
-        
+
         if (!response.ok) {
             throw new Error(`Erreur lors de l'envoi du message: ${response.status}`);
         }
-        
+
         return response;
     },
 
@@ -119,14 +120,14 @@ export const ApiService = {
     changeProfile: async (profileId: string): Promise<{ profile: CurrentProfile, conversation_id?: string }> => {
         const response = await fetch(`${API_BASE_URL}/profiles/change`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ profile_id: profileId }),
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({profile_id: profileId}),
         });
-        
+
         if (!response.ok) {
             throw new Error(`Erreur lors du changement de profil: ${response.status}`);
         }
-        
+
         return await response.json();
     },
 
@@ -136,17 +137,17 @@ export const ApiService = {
         if (profileId) {
             requestBody.profile_id = profileId;
         }
-        
+
         const response = await fetch(`${API_BASE_URL}/reset-memory`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify(requestBody),
         });
-        
+
         if (!response.ok) {
             throw new Error(`Erreur lors de la réinitialisation: ${response.status}`);
         }
-        
+
         return await response.json();
     }
 };

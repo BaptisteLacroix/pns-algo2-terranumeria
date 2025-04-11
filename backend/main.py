@@ -1,11 +1,13 @@
 import logging
+import sys
 import traceback
+
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 
-from model import Model
 from conversation_manager import ConversationManager
-from profiles.profiles import get_profile_names, get_profile_content
+from model import Model
+from profiles.profiles import get_profile_names
 
 # Set up logging
 logger = logging.getLogger("FlaskAppLogger")
@@ -29,14 +31,15 @@ logger.info("All models are loaded")
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()
 
-def llm_response_stream(model, prompt, temperature):
+
+def llm_response_stream(model, prompt, temperature, topP):
     """
     :param prompt: Prompt text to send to the model
     :return: Generator for streaming response
     """
     try:
         logger.info(f"Starting response generation for prompt: {prompt[:30]}...")  # Log the first part of the prompt
-        for chunk in model.generate_response_stream(prompt):
+        for chunk in model.generate_response_stream(prompt, temperature, topP):
             logger.debug(f"Processing chunk: {chunk[:100]}...")  # Log the first part of the chunk for better tracking
             yield chunk
     except Exception as e:
@@ -59,6 +62,7 @@ def llm_completions():
         prompt = data.get('prompt', '')
         model = data.get('model', 'mistral')
         temperature = data.get('temperature', 0.7)
+        topP = data.get('topP', 0.1)
         conversation_id = data.get('conversation_id', None)
         profile_id = data.get('profile_id', None)  # Nouveau: profile_id pour choisir un profil
 
@@ -85,7 +89,8 @@ def llm_completions():
             return jsonify({"error": "Prompt is required"}), 400
 
         logger.info("Using Mistral model")
-        return Response(llm_response_stream(mistral_model, prompt, temperature), content_type='text/event-stream', status=200)
+        return Response(llm_response_stream(mistral_model, prompt, temperature, topP), content_type='text/event-stream',
+                        status=200)
 
     except Exception as e:
         logger.error(f"Error in openai_completions: {str(e)}")
@@ -154,7 +159,7 @@ def reset_memory():
 
         return jsonify({
 
-        # Renvoie l'ID de conversation et les infos du profil actuel
+            # Renvoie l'ID de conversation et les infos du profil actuel
             "message": "Mémoire de conversation réinitialisée",
             "conversation_id": mistral_model.current_conversation_id,
             "profile": {
@@ -239,4 +244,7 @@ def health_check():
 
 if __name__ == '__main__':
     logger.info("Starting Flask app")
+    if len(sys.argv) != 3:
+        print("Usage: python setup_and_run.py <HF_TOKEN> <CACHE_DIR>")
+        sys.exit(1)
     app.run(debug=False, threaded=True, host='0.0.0.0', port=5000)
