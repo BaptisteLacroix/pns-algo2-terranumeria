@@ -27,6 +27,8 @@ type SidePanelRightProps = {
     changeProfile: (profile: string) => void;
     temperature: number;
     setTemperature: (value: number) => void;
+    topP: number;
+    setTopP: (value: number) => void;
 }
 
 export const SidePanelRight: React.FC<SidePanelRightProps> = ({
@@ -37,6 +39,8 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                                                   changeProfile,
                                                                   temperature,
                                                                   setTemperature,
+                                                                  topP,
+                                                                  setTopP,
                                                               }) => {
     const [profiles, setProfiles] = useState<Record<string, Profile>>({});
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null);
@@ -48,6 +52,12 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
         if (isNaN(Number(value))) return;
         setTemperature(value);
     };
+
+    const handleTopPChange = (value: any) => {
+        if (isNaN(Number(value))) return;
+        setTopP(value);
+    };
+
     // Nombre de profils à afficher dans la vue principale
     const MAX_PROFILES_TO_SHOW = 4;
 
@@ -109,7 +119,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
     const renderProfileItem = (id: string, profile: Profile, currentProfileId: string) => (
         <div
             key={id}
-            className={`p-2 rounded-md cursor-pointer transition-colors flex flex-col items-center
+            className={`p-2 rounded-none  cursor-pointer transition-colors flex flex-col items-center
         ${currentProfileId === id
                 ? 'bg-blue-100 border border-blue-300'
                 : 'hover:bg-gray-100 border border-transparent'}`}
@@ -145,7 +155,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                 <div className="mt-2">
                     {/* Profil actuel mis en évidence */}
                     {currentProfile && (
-                        <div className="mb-4 p-3 bg-blue-50 rounded-md border-l-4 border-blue-500 flex items-center">
+                        <div className="mb-4 p-3 bg-blue-50 rounded-none  border-l-4 border-blue-500 flex items-center">
                             <Avatar
                                 src={`/profiles/${currentProfile.id}.png`}
                                 alt={currentProfile.name}
@@ -253,7 +263,69 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                                 value={temperature}
                                 onChange={handleTemperatureChange}
                             />
+                            <Tooltip content={
+                                <div className="p-3 bg-gray-800 text-white rounded-none  shadow-lg w-64">
+                                    <div className="mb-2">
+                                        <strong className="text-lg">Température</strong>
+                                    </div>
+                                    <div className="text-sm">
+                                        Contrôle l'aléa des réponses du modèle.
+                                    </div>
+                                    <div className="mt-1 text-sm">
+                                        Une valeur plus élevée (près de 1.2) rend le modèle plus créatif et diversifié.
+                                    </div>
+                                    <div className="mt-1 text-sm">
+                                        Une valeur plus faible (près de 0.5) rend le modèle plus concentré et
+                                        déterministe.
+                                    </div>
+                                </div>
+                            } placement="top">
+      <span className="text-xs text-gray-500 cursor-help w-full inline">
+        ⓘ
+      </span>
+                            </Tooltip>
                         </div>
+
+                        <div className="pl-5 pr-5">
+                            <Slider
+                                classNames={{
+                                    base: "max-w-md",
+                                    label: "text-medium",
+                                }}
+                                color="primary"
+                                label="Top P"
+                                maxValue={1}
+                                minValue={0}
+                                radius={"none"}
+                                size="sm"
+                                step={0.05}
+                                value={topP}
+                                onChange={handleTopPChange}
+                            />
+                            <Tooltip content={
+                                <div className="p-3 bg-gray-800 text-white rounded-none  shadow-lg w-64">
+                                    <div className="mb-2">
+                                        <strong className="text-lg">Top-p</strong>
+                                    </div>
+                                    <div className="text-sm">
+                                        Contrôle la diversité des choix de mots pendant la génération de texte.
+                                    </div>
+                                    <div className="mt-1 text-sm">
+                                        Le modèle sélectionne les mots dont la somme cumulative de probabilité est
+                                        inférieure à la valeur de p.
+                                    </div>
+                                    <div className="mt-1 text-sm">
+                                        Une valeur de p proche de 1 permet une plus grande diversité, tandis qu'une
+                                        valeur plus faible limite les choix aux mots les plus probables.
+                                    </div>
+                                </div>
+                            } placement="top">
+      <span className="text-xs text-gray-500 cursor-help w-full inline">
+        ⓘ
+      </span>
+                            </Tooltip>
+                        </div>
+
                     </CardBody>
                 </Card>
             </div>
