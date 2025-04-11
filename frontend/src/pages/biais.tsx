@@ -25,7 +25,7 @@ const ContentCard: React.FC<{title: string; icon?: string; children: React.React
 };
 
 export const Biais: React.FC = () => {
-    const [activeSection, setActiveSection] = useState<string>("introduction");
+    const [, setActiveSection] = useState<string>("introduction");
     const [activeTab, setActiveTab] = useState<string>("societal");
     const sectionRefs = {
         introduction: useRef<HTMLDivElement>(null),
@@ -199,7 +199,7 @@ export const Biais: React.FC = () => {
                         </div>
                         
                         <div className="bg-gray-50 p-8 rounded-xl shadow-sm mb-8">
-                            <Tabs aria-label="Types de biais" variant="pills" color="warning" className="mb-4" selectedKey={activeTab} onSelectionChange={setActiveTab}>
+                            <Tabs aria-label="Types de biais" variant="solid" color="warning" className="mb-4" selectedKey={activeTab} onSelectionChange={(key) => setActiveTab(key.toString())}>
                                 <Tab key="societal" title="Biais sociétaux">
                                     <div className="space-y-4 p-4 bg-white rounded-lg mt-4">
                                         <h3 className="text-xl font-semibold text-darkblue">Biais sociétaux</h3>
