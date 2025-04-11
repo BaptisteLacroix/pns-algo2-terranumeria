@@ -26,7 +26,7 @@ export const Mathematiques: React.FC = () => {
                             <Image
                                 alt="Illustration de mathématiques dans l'IA"
                                 className="w-full h-auto"
-                                src="https://miro.medium.com/v2/resize:fit:1400/1*GmDcJyLF2uuK6r1BQKDRCQ.jpeg"
+                                src="documentation/maths/maths.png"
                             />
                         </div>
                     </div>
@@ -68,13 +68,6 @@ export const Mathematiques: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className="mt-6 flex justify-center">
-                            <Image
-                                alt="Représentation visuelle d'algèbre linéaire dans l'IA"
-                                className="max-w-full h-auto rounded-lg shadow-md"
-                                src="https://miro.medium.com/v2/resize:fit:1400/1*fP_bVbIqYHvj8aIP4eVV8g.jpeg"
-                            />
-                        </div>
                     </div>
 
                     {/* Section 2: Calcul différentiel */}
@@ -88,7 +81,7 @@ export const Mathematiques: React.FC = () => {
                                 <Image
                                     alt="Illustration du calcul différentiel dans l'IA"
                                     className="w-full h-auto"
-                                    src="https://miro.medium.com/v2/resize:fit:1400/1*WJMVPwhXeR7WYcLtBLwJ-g.jpeg"
+                                    src="documentation/maths/calcul-diff.png"
                                 />
                             </div>
                             <div className="md:w-2/3">
@@ -202,7 +195,7 @@ export const Mathematiques: React.FC = () => {
                                 <Image
                                     alt="Illustration de théorie des graphes dans l'IA"
                                     className="w-full h-auto"
-                                    src="https://miro.medium.com/v2/resize:fit:1400/1*tH1f0hFvxd-BVJEEoN_ZwA.jpeg"
+                                    src="documentation/maths/graphes.png"
                                 />
                             </div>
                             <div className="md:w-3/5">
@@ -346,7 +339,7 @@ export const Mathematiques: React.FC = () => {
                             <Image
                                 alt="Représentation des mathématiques dans un modèle de langage"
                                 className="max-w-full h-auto rounded-lg shadow-md"
-                                src="https://miro.medium.com/v2/resize:fit:1400/1*xRQjLlDpMSq8n9YHzOBYxA.jpeg"
+                                src="documentation/maths/maths-langage.png"
                             />
                         </div>
                     </div>
