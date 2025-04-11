@@ -6,8 +6,8 @@ export const Veracite: React.FC = () => {
             <CardBody className={"overflow-auto max-h-[90vh]"}>
                 <CardBody className="p-6 bg-white">
                     {/* En-tête */}
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg mb-8 border-l-4 border-blue-500 shadow-sm">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-4">La Véracité des Informations dans l'IA</h1>
+                    <div className="p-6 rounded-lg mb-8 border-l-4 border-blue shadow-sm">
+                        <h1 className="text-3xl font-bold text-darkblue mb-4">La Véracité des Informations dans l'IA</h1>
                         <p className="text-lg text-gray-700 italic">
                             Comment évaluer la fiabilité des informations générées par l'intelligence artificielle
                         </p>
@@ -35,22 +35,22 @@ export const Veracite: React.FC = () => {
 
                     {/* Section 1: Hallucinations de l'IA */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-semibold text-blue-600 mb-4 flex items-center">
-                            <span className="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">1</span>
+                        <h2 className="text-2xl font-semibold text-blue mb-4 flex items-center">
+                            <span className="bg-blue text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">1</span>
                             Le phénomène des "hallucinations" de l'IA
                         </h2>
                         <p className="text-lg text-gray-700 mt-2 mb-4">
                             Les "hallucinations" constituent l'un des défis majeurs des grands modèles de langage (LLM) comme ceux 
                             utilisés dans Terra NumerIA.
                         </p>
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r">
+                        <div className="bg-yellow/10 border-l-4 border-yellow p-4 mb-6 rounded-r">
                             <p className="text-base text-gray-700">
                                 <strong>Point clé :</strong> Les hallucinations sont des informations générées par l'IA qui semblent 
                                 plausibles et sont présentées avec assurance, mais qui sont en réalité inexactes, fabriquées ou sans fondement factuel.
                             </p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-blue-400">
+                            <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-blue">
                                 <h3 className="text-xl font-medium text-gray-800 mb-2">Causes principales</h3>
                                 <p className="text-base text-gray-600">
                                     Elles surviennent lorsque le modèle tente de compléter des motifs 
@@ -58,7 +58,7 @@ export const Veracite: React.FC = () => {
                                     de différentes sources dans ses données d'entraînement.
                                 </p>
                             </div>
-                            <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-purple-400">
+                            <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-green">
                                 <h3 className="text-xl font-medium text-gray-800 mb-2">Exemples courants</h3>
                                 <p className="text-base text-gray-600">
                                     Citations inventées, références à des recherches inexistantes, 
@@ -70,8 +70,8 @@ export const Veracite: React.FC = () => {
 
                     {/* Section 2: Limites des connaissances */}
                     <div className="mb-12 bg-gray-50 p-6 rounded-lg shadow-sm">
-                        <h2 className="text-2xl font-semibold text-blue-600 mb-4 flex items-center">
-                            <span className="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">2</span>
+                        <h2 className="text-2xl font-semibold text-blue mb-4 flex items-center">
+                            <span className="bg-blue text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">2</span>
                             Limites des connaissances de l'IA
                         </h2>
                         <div className="flex flex-col md:flex-row gap-6 items-center">
@@ -87,28 +87,28 @@ export const Veracite: React.FC = () => {
                                     Les modèles d'IA comme Terra NumerIA ont des limitations inhérentes à leur conception :
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-blue-50 border-none p-4 rounded-lg shadow-sm">
+                                    <div className="bg-blue/10 border-none p-4 rounded-lg shadow-sm">
                                         <h3 className="text-lg font-semibold mb-2">Date limite des connaissances</h3>
                                         <p className="text-gray-700">
                                             Les modèles d'IA sont entraînés sur des données
                                             jusqu'à une certaine date, après laquelle ils n'ont plus de connaissances des événements ou découvertes.
                                         </p>
                                     </div>
-                                    <div className="bg-purple-50 border-none p-4 rounded-lg shadow-sm">
+                                    <div className="bg-yellow/10 border-none p-4 rounded-lg shadow-sm">
                                         <h3 className="text-lg font-semibold mb-2">Absence d'accès à Internet</h3>
                                         <p className="text-gray-700">
                                             Contrairement aux moteurs de recherche, la plupart des IA 
                                             conversationnelles ne peuvent pas rechercher activement de nouvelles informations sur le web en temps réel.
                                         </p>
                                     </div>
-                                    <div className="bg-indigo-50 border-none p-4 rounded-lg shadow-sm">
+                                    <div className="bg-green/10 border-none p-4 rounded-lg shadow-sm">
                                         <h3 className="text-lg font-semibold mb-2">Compréhension limitée du contexte</h3>
                                         <p className="text-gray-700">
                                             Les modèles peuvent mal interpréter les nuances 
                                             ou le contexte spécifique d'une question, conduisant à des réponses hors sujet ou inappropriées.
                                         </p>
                                     </div>
-                                    <div className="bg-cyan-50 border-none p-4 rounded-lg shadow-sm">
+                                    <div className="bg-darkblue/10 border-none p-4 rounded-lg shadow-sm">
                                         <h3 className="text-lg font-semibold mb-2">Traitement probabiliste</h3>
                                         <p className="text-gray-700">
                                             L'IA ne "sait" pas vraiment des faits mais produit du texte basé 
@@ -122,8 +122,8 @@ export const Veracite: React.FC = () => {
 
                     {/* Section 3: Évaluation de la fiabilité */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-semibold text-blue-600 mb-4 flex items-center">
-                            <span className="bg-blue-600 text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span>
+                        <h2 className="text-2xl font-semibold text-blue mb-4 flex items-center">
+                            <span className="bg-blue text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span>
                             Évaluation de la fiabilité des réponses
                         </h2>
                         <p className="text-lg text-gray-700 mt-2 mb-4">
@@ -131,10 +131,10 @@ export const Veracite: React.FC = () => {
                         </p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                            <Card className="bg-blue-50 border-none shadow-sm">
+                            <Card className="bg-blue/10 border-none shadow-sm">
                                 <CardBody>
                                     <div className="h-12 flex items-center justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
@@ -146,10 +146,10 @@ export const Veracite: React.FC = () => {
                                 </CardBody>
                             </Card>
                             
-                            <Card className="bg-purple-50 border-none shadow-sm">
+                            <Card className="bg-yellow/10 border-none shadow-sm">
                                 <CardBody>
                                     <div className="h-12 flex items-center justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-++yellow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
@@ -161,10 +161,10 @@ export const Veracite: React.FC = () => {
                                 </CardBody>
                             </Card>
                             
-                            <Card className="bg-indigo-50 border-none shadow-sm">
+                            <Card className="bg-green/10 border-none shadow-sm">
                                 <CardBody>
                                     <div className="h-12 flex items-center justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </div>
@@ -178,14 +178,14 @@ export const Veracite: React.FC = () => {
                         </div>
                         
                         <div className="mt-6 flex flex-col md:flex-row gap-4">
-                            <div className="md:w-1/2 bg-white p-5 rounded-lg shadow-sm border-l-4 border-cyan-400">
+                            <div className="md:w-1/2 bg-white p-5 rounded-lg shadow-sm border-l-4 border-blue">
                                 <h3 className="text-xl font-medium text-gray-800 mb-2">Plausibilité</h3>
                                 <p className="text-base text-gray-600">
                                     Les informations extraordinaires ou qui contredisent des connaissances 
                                     établies devraient être traitées avec plus de scepticisme.
                                 </p>
                             </div>
-                            <div className="md:w-1/2 bg-white p-5 rounded-lg shadow-sm border-l-4 border-teal-400">
+                            <div className="md:w-1/2 bg-white p-5 rounded-lg shadow-sm border-l-4 border-green">
                                 <h3 className="text-xl font-medium text-gray-800 mb-2">Sujet et temporalité</h3>
                                 <p className="text-base text-gray-600">
                                     Les informations sur des sujets spécialisés ou des événements 
