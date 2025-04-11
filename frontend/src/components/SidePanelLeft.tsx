@@ -38,7 +38,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                             </li>
                             <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
-                                    href="#"
+                                    href={"/biais"}
                                     isBlock
                                     color={undefined}
                                     className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -48,7 +48,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                             </li>
                             <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
-                                    href="#"
+                                    href={"/veracite"}
                                     isBlock
                                     color={undefined}
                                     className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -58,7 +58,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                             </li>
                             <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
-                                    href="#"
+                                    href={"/mathematiques"}
                                     isBlock
                                     color={undefined}
                                     className="text-darkblue font-semibold text-lg py-2 px-4 block"
@@ -68,7 +68,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
                             </li>
                             <li className="hover:bg-yellow rounded-none transition-colors">
                                 <Link
-                                    href="#"
+                                    href={"/espace-vectoriel"}
                                     isBlock
                                     color={undefined}
                                     className="text-darkblue font-semibold text-lg py-2 px-4 block"
