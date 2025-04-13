@@ -9,7 +9,7 @@ export const SidePanelLeft: React.FC<{ callResetChat: () => void }> = ({
             <Spacer y={4}/>
             <Image
                 alt="heroui logo"
-                src="/logo.png"
+                src="./logo.png"
                 className="rounded-none cursor-pointer mx-auto mb-6"
                 onClick={() => {
                     callResetChat();

@@ -64,15 +64,15 @@ class Model:
     def __init__(self, model_chosen, profile_id="default"):
         # Check if GPU is available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"📌 Using device: {self.device}")
+        logger.info(f"📌 Using device: {self.device}")
         self.model_name = self.check_and_load_model_name(model_chosen)
         self.tokenizer = None
         self.login_hugging_face()
         self.ai_model = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
-            print(f"✅ Model {self.model_name} loaded successfully")
+            logger.info(f"✅ Model {self.model_name} loaded successfully")
         else:
-            print("❌ Error loading model or tokenizer")
+            logger.info("❌ Error loading model or tokenizer")
 
         # Chargement du profil sélectionné
         self.profile_id = profile_id
@@ -109,9 +109,9 @@ class Model:
     def login_hugging_face():
         try:
             login(token=HF_TOKEN)
-            print("✅ Successfully logged in to Hugging Face")
+            logger.info("✅ Successfully logged in to Hugging Face")
         except Exception as e:
-            print(f"⚠️ Error logging in to Hugging Face: {e}")
+            logger.info(f"⚠️ Error logging in to Hugging Face: {e}")
 
     @staticmethod
     def check_and_load_model_name(model_chosen):
@@ -121,11 +121,11 @@ class Model:
     def load_model(self):
         # Load tokenizer and model (loading them globally for reuse)
         try:
-            print(f"🔄 Loading tokenizer for {self.model_name}...")
+            logger.info(f"🔄 Loading tokenizer for {self.model_name}...")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=CACHE_DIR)
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
-            print(f"🔄 Loading model {self.model_name}...")
+            logger.info(f"🔄 Loading model {self.model_name}...")
 
             device_map = {"": 0}  # Map all modules to GPU 0 by default
 
@@ -152,7 +152,7 @@ class Model:
 
             return model
         except Exception as e:
-            print(f"❌ Error loading model or tokenizer: {e}")
+            logger.info(f"❌ Error loading model or tokenizer: {e}")
 
     def generate_response_stream(self, prompt, temperature=0.7, topP=0.1):
         """

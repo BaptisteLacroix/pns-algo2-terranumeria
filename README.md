@@ -90,6 +90,7 @@ You can run the frontend in two ways:
   Simply open the `frontend/dist/index.html` file in your browser after building with:
   ```bash
   npm run build
+  serve ./dist/
   ```
 
 Make sure your browser allows local file access if running from `index.html`.

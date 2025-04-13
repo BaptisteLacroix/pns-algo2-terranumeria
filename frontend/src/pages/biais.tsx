@@ -99,7 +99,7 @@ export const Biais: React.FC = () => {
                             <Image
                                 alt="Illustration de biais dans l'IA"
                                 className="w-full h-auto"
-                                src="/documentation/biais/biais-ia.png"
+                                src="./documentation/biais/biais-ia.png"
                             />
                         </div>
                     </div>
@@ -131,7 +131,7 @@ export const Biais: React.FC = () => {
                                     <Image
                                         alt="Illustration de biais dans l'IA"
                                         className="w-full h-auto"
-                                        src="/documentation/biais/comprendre-biais.png"
+                                        src="./documentation/biais/comprendre-biais.png"
                                     />
                                 </div>
                             </div>
