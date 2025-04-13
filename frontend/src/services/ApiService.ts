@@ -27,11 +27,46 @@ export type CurrentProfile = {
     name: string;
 };
 
-// Constantes
-const API_BASE_URL = "http://127.0.0.1:5000";
+// Constants
+const API_BASE_URL = "http://127.0.0.1:5000/api";
 
 // Services d'API
 export const ApiService = {
+
+    setModel: async (modelCategory: string, modelId: string) => {
+        const response = await fetch(`${API_BASE_URL}/models/${modelCategory}/${modelId}`, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unable to change the model');
+        }
+        return data;
+    },
+
+    setCustomModel: async (modelUrl: string): Promise<{ message: string, models: any }> => {
+        const response = await fetch(`${API_BASE_URL}/models/custom`, {
+            method: "POST",
+            body: JSON.stringify({modelUrl}),
+            headers: {"Content-Type": "application/json"},
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unable to set custom model');
+        }
+        return data;
+    },
+
+    getModels: async (): Promise<{ models: any }> => {
+        const response = await fetch(`${API_BASE_URL}/models`);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unable to retrieve models');
+        }
+        return data.models;
+    },
+
     // Conversations
     getConversations: async (): Promise<Conversation[]> => {
         const response = await fetch(`${API_BASE_URL}/conversations`);
@@ -69,23 +104,18 @@ export const ApiService = {
     },
 
     // Réponses et messages
-    sendMessage: async (prompt: string, model: string = "mistral", temperature: number, topP: number, conversationId?: string, profileId?: string) => {
+    sendMessage: async (prompt: string, temperature: number, topP: number, conversationId?: string, profileId?: string) => {
         const requestBody: Record<string, any> = {
             prompt,
-            model
+            temperature,
+            topP,
         };
-
-        requestBody.temperature = temperature;
-        requestBody.topP = topP;
-
         if (conversationId) {
             requestBody.conversation_id = conversationId;
         }
-
         if (profileId && !conversationId) {
             requestBody.profile_id = profileId;
         }
-
         const response = await fetch(`${API_BASE_URL}/responses`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
@@ -149,5 +179,14 @@ export const ApiService = {
         }
 
         return await response.json();
+    },
+
+    getCurrentModel: async (): Promise<string> => {
+        const response = await fetch(`${API_BASE_URL}/models/current`);
+        if (!response.ok) {
+            throw new Error(`Erreur lors du chargement du modèle actuel: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.currentModel;
     }
 };

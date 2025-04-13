@@ -49,10 +49,6 @@ class ProbabilityLogitsProcessor(LogitsProcessor):
 
 
 class Model:
-    MODELS = {
-        "mistral": "Faradaylab/ARIA-7B-V3-mistral-french-v1",
-    }
-
     @property
     def current_conversation_id(self):
         return self._current_conversation_id
@@ -61,21 +57,27 @@ class Model:
     def current_conversation_id(self, conversation_id):
         self._current_conversation_id = conversation_id
 
-    def __init__(self, model_chosen, profile_id="default"):
+    def __init__(self, model_category, model_id, profile_id="default", available_models=None):
+        if available_models is None:
+            self.load_default_config()
+        else:
+            self.available_models = available_models
         # Check if GPU is available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"📌 Using device: {self.device}")
-        self.model_name = self.check_and_load_model_name(model_chosen)
+        self.model_path = self.check_and_get_model_path(model_category, model_id)
         self.tokenizer = None
         self.login_hugging_face()
-        self.ai_model = self.load_model()
+        self.ai_model, exception = self.load_model()
         if self.tokenizer is not None and self.ai_model is not None:
-            logger.info(f"✅ Model {self.model_name} loaded successfully")
+            logger.info(f"✅ Model {self.model_path} loaded successfully")
         else:
-            logger.info("❌ Error loading model or tokenizer")
+            logger.info("❌ Error loading model or tokenizer: ", exception)
 
         # Chargement du profil sélectionné
         self.profile_id = profile_id
+        self.profile_name = None
+        self.chat_history = None
         self.load_profile(profile_id)
 
         self.conversation_manager = ConversationManager()
@@ -84,26 +86,32 @@ class Model:
         # Initialiser le processeur de logits pour les probabilités
         self.prob_processor = None
 
-    def load_profile(self, profile_id):
-        """Charge un profil spécifique pour l'IA"""
-        profile = get_profile_content(profile_id)
-        self.profile_id = profile_id
-        self.profile_name = profile["name"]
+    def load_default_config(self):
+        # The models dictionary will store categories of models, each with a list of models.
+        with open('config.json', 'r') as f:
+            self.available_models = json.load(f)
 
-        # Initialisation de l'historique avec le prompt système du profil
-        self.chat_history = [{"role": "system", "content": profile["system_prompt"]}]
-        logger.info(f"Profil chargé: {self.profile_name} (ID: {self.profile_id})")
+    def update_available_models(self, model_category, model_id, model_url):
+        """
+        Met à jour la liste des modèles disponibles
+        """
+        if model_category not in self.available_models:
+            self.available_models[model_category] = {}
+        self.available_models[model_category][model_id] = model_url
+        # Sauvegarde de la configuration mise à jour dans le fichier config.json
+        with open('config.json', 'w') as f:
+            json.dump(self.available_models, f, indent=4)
+        logger.info(f"Available models updated: {self.available_models}")
+        return self.available_models
 
-        return True
-
-    def change_profile(self, profile_id):
-        """Change le profil de l'IA et réinitialise l'historique"""
-        success = self.load_profile(profile_id)
-        if success:
-            # Génère un nouveau conversation ID pour cette nouvelle session avec profil différent
-            self._current_conversation_id = self.conversation_manager.generate_conversation_id()
-            return True
-        return False
+    def change_model(self, model_category, model_id):
+        """
+        Change le modèle de l'IA et réinitialise l'historique
+        """
+        print(f"Changing model to {model_category}/{model_id}")
+        self.model_path = self.check_and_get_model_path(model_category, model_id)
+        self.ai_model, exception = self.load_model()
+        return self.model_path, exception
 
     @staticmethod
     def login_hugging_face():
@@ -113,19 +121,20 @@ class Model:
         except Exception as e:
             logger.info(f"⚠️ Error logging in to Hugging Face: {e}")
 
-    @staticmethod
-    def check_and_load_model_name(model_chosen):
-        if model_chosen in Model.MODELS:
-            return Model.MODELS.get(model_chosen)
+    def check_and_get_model_path(self, model_category, model_id):
+        if model_category in self.available_models:
+            for key, value in self.available_models.get(model_category).items():
+                if key == model_id:
+                    return model_category + "/" + model_id
 
     def load_model(self):
         # Load tokenizer and model (loading them globally for reuse)
         try:
-            logger.info(f"🔄 Loading tokenizer for {self.model_name}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=CACHE_DIR)
+            logger.info(f"🔄 Loading tokenizer for {self.model_path}...")
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, cache_dir=CACHE_DIR)
             self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
 
-            logger.info(f"🔄 Loading model {self.model_name}...")
+            logger.info(f"🔄 Loading model {self.model_path}...")
 
             device_map = {"": 0}  # Map all modules to GPU 0 by default
 
@@ -138,7 +147,7 @@ class Model:
             )
 
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
+                self.model_path,
                 device_map=device_map,  # Use custom device map
                 quantization_config=quantization_config,
                 torch_dtype=torch.float16,
@@ -148,13 +157,12 @@ class Model:
                 low_cpu_mem_usage=True  # Optimize CPU memory usage
             )
 
-            self.last_logits = None
-
-            return model
+            return model, None
         except Exception as e:
             logger.info(f"❌ Error loading model or tokenizer: {e}")
+            return None, e
 
-    def generate_response_stream(self, prompt, temperature=0.7, topP=0.1):
+    def generate_response_stream(self, prompt, temperature=0.7, top_p=0.1):
         """
         Generate streaming response from the language model with token probabilities
         """
@@ -185,7 +193,7 @@ class Model:
                 attention_mask=attention_mask,
                 max_new_tokens=512,
                 temperature=temperature,
-                top_p=topP,
+                top_p=top_p,
                 do_sample=True,
                 streamer=streamer,
                 logits_processor=[self.prob_processor],
@@ -284,6 +292,27 @@ class Model:
         # Génère un nouveau ID de conversation
         self._current_conversation_id = self.conversation_manager.generate_conversation_id()
 
+    def load_profile(self, profile_id):
+        """Charge un profil spécifique pour l'IA"""
+        profile = get_profile_content(profile_id)
+        self.profile_id = profile_id
+        self.profile_name = profile["name"]
+
+        # Initialisation de l'historique avec le prompt système du profil
+        self.chat_history = [{"role": "system", "content": profile["system_prompt"]}]
+        logger.info(f"Profil chargé: {self.profile_name} (ID: {self.profile_id})")
+
+        return True
+
+    def change_profile(self, profile_id):
+        """Change le profil de l'IA et réinitialise l'historique"""
+        success = self.load_profile(profile_id)
+        if success:
+            # Génère un nouveau conversation ID pour cette nouvelle session avec profil différent
+            self._current_conversation_id = self.conversation_manager.generate_conversation_id()
+            return True
+        return False
+
     def load_conversation_history(self, conversation_id):
         """Charge une conversation existante."""
         conversation_data = self.conversation_manager.load_conversation(conversation_id)
@@ -299,3 +328,15 @@ class Model:
 
             return True
         return False
+
+    def get_available_models(self):
+        """
+        Renvoie la liste des modèles disponibles
+        """
+        return self.available_models
+
+    def get_current_model(self):
+        """
+        Renvoie le modèle actuel
+        """
+        return self.model_path
