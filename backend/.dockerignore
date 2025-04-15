@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# Python env files
+.env
+.env.*
+
+# OS / Editor files
+.DS_Store
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+
+# Docker
+Dockerfile
+docker-compose.yml

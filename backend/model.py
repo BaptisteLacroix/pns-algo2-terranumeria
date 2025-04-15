@@ -14,7 +14,7 @@ from conversation_manager import ConversationManager
 from profiles import get_profile_content
 
 HF_TOKEN = sys.argv[1]
-CACHE_DIR = sys.argv[2]
+CACHE_DIR = sys.argv[2] if len(sys.argv) > 2 else None
 
 logger = logging.getLogger("FlaskAppLogger")
 
@@ -72,7 +72,7 @@ class Model:
         if self.tokenizer is not None and self.ai_model is not None:
             logger.info(f"✅ Model {self.model_path} loaded successfully")
         else:
-            logger.info("❌ Error loading model or tokenizer: ", exception)
+            logger.info(f"❌ Error loading model or tokenizer: {str(exception)}")
 
         # Chargement du profil sélectionné
         self.profile_id = profile_id

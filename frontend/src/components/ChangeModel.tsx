@@ -92,7 +92,7 @@ export const ChangeModel: React.FC = () => {
 
     const renderModelCategories = () => {
         return Object.keys(availableModels).map((category) => (
-            <SelectItem key={category} value={category}>
+            <SelectItem key={category}>
                 {category}
             </SelectItem>
         ));
@@ -101,7 +101,7 @@ export const ChangeModel: React.FC = () => {
     const renderModelsForCategory = () => {
         if (!selectedCategory) return null;
         return Object.entries(availableModels[selectedCategory]).map(([modelId]) => (
-            <SelectItem key={modelId} value={modelId}>
+            <SelectItem key={modelId}>
                 {modelId}
             </SelectItem>
         ));
