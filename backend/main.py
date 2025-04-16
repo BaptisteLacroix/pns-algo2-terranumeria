@@ -328,6 +328,6 @@ def health_check():
 if __name__ == '__main__':
     logger.info("Starting Flask app")
     if len(sys.argv) < 2:
-        print("Usage: python setup_and_run.py <HF_TOKEN> <CACHE_DIR>")
+        print("Usage: python -u -m main <HF_TOKEN> <CACHE_DIR>")
         sys.exit(1)
-    app.run(debug=False, threaded=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, threaded=True, host='0.0.0.0', port=3000)
