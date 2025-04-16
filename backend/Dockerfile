@@ -34,6 +34,5 @@ COPY . .
 # Expose app port
 EXPOSE 5000
 
-# Run the application
 # Run the application with conditional CACHE_DIR argument
-CMD ["/bin/bash", "-c", "if [ -z \"$CACHE_DIR\" ]; then /opt/conda/envs/backend_env/bin/python -m main \"$HF_TOKEN\"; else /opt/conda/envs/backend_env/bin/python -m main \"$HF_TOKEN\" \"$CACHE_DIR\"; fi"]
+CMD ["/bin/bash", "-c", "if [ -z \"$CACHE_DIR\" ]; then /opt/conda/envs/backend_env/bin/python -u -m main \"$HF_TOKEN\"; else /opt/conda/envs/backend_env/bin/python -u -m main \"$HF_TOKEN\" \"$CACHE_DIR\"; fi"]

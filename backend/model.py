@@ -8,7 +8,9 @@ from threading import Thread
 import torch
 import torch.nn.functional as F
 from huggingface_hub import login
+from loadtime import LoadTime
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextIteratorStreamer, LogitsProcessor
+from transformers.utils import logging as hf_logging
 
 from conversation_manager import ConversationManager
 from profiles import get_profile_content
@@ -17,6 +19,15 @@ HF_TOKEN = sys.argv[1]
 CACHE_DIR = sys.argv[2] if len(sys.argv) > 2 else None
 
 logger = logging.getLogger("FlaskAppLogger")
+
+# Enable Hugging Face Transformers logging
+hf_logging.set_verbosity_info()
+hf_logging.enable_default_handler()
+hf_logging.enable_explicit_format()
+
+# Optional: direct HF logs to your existing logger
+transformers_logger = hf_logging.get_logger()
+transformers_logger.setLevel(logging.INFO)
 
 
 # Classe pour capturer les probabilités des tokens pendant la génération
@@ -128,16 +139,9 @@ class Model:
                     return model_category + "/" + model_id
 
     def load_model(self):
-        # Load tokenizer and model (loading them globally for reuse)
+        # Load model and tokenizer (loading them globally for reuse)
         try:
-            logger.info(f"🔄 Loading tokenizer for {self.model_path}...")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, cache_dir=CACHE_DIR)
-            self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
-
-            logger.info(f"🔄 Loading model {self.model_path}...")
-
             device_map = {"": 0}  # Map all modules to GPU 0 by default
-
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
@@ -145,18 +149,25 @@ class Model:
                 bnb_4bit_quant_type="nf4",
                 llm_int8_enable_fp32_cpu_offload=True  # Enable CPU offloading for modules that don't fit in GPU
             )
-
-            model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                device_map=device_map,  # Use custom device map
-                quantization_config=quantization_config,
-                torch_dtype=torch.float16,
-                cache_dir=CACHE_DIR,
-                offload_folder="offload",  # Specify a folder for disk offloading
-                offload_state_dict=True,  # Enable state dict offloading to save GPU memory
-                low_cpu_mem_usage=True  # Optimize CPU memory usage
-            )
-
+            logger.info(f"🔄 Loading model {self.model_path}...")
+            # Wrapping the model loading call—LoadTime will provide a progress bar based on previous loading times.
+            model = LoadTime(name=self.model_path,
+                             fn=lambda: AutoModelForCausalLM.from_pretrained(
+                                 self.model_path,
+                                 torch_dtype=torch.float16,
+                                 device_map=device_map,
+                                 quantization_config=quantization_config,
+                                 cache_dir=CACHE_DIR,
+                                 offload_folder="offload",  # Specify a folder for disk offloading
+                                 offload_state_dict=True,  # Enable state dict offloading to save GPU memory
+                                 low_cpu_mem_usage=True  # Optimize CPU memory usage
+                             ))()
+            logger.info("✅ Model loaded successfully")
+            # Then load the tokenizer (note: loading the tokenizer after the model is recommended)
+            logger.info(f"🔄 Loading tokenizer for {self.model_path}...")
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, cache_dir=CACHE_DIR)
+            self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
+            logger.info(f"✅ Tokenizer {self.model_path} loaded successfully")
             return model, None
         except Exception as e:
             logger.info(f"❌ Error loading model or tokenizer: {e}")

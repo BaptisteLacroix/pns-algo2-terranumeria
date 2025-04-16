@@ -14,3 +14,4 @@ flask-cors
 protobuf
 tokenizers
 sentencepiece
+loadtime

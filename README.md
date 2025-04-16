@@ -108,7 +108,7 @@ command-line arguments.
 ```bash
 cd backend/
 pip install -r requirements.txt
-python -m main <HF_TOKEN> <CACHE_DIR>
+python -u -m main <HF_TOKEN> <CACHE_DIR>
 ```
 
 Where:
@@ -125,6 +125,90 @@ frontend (dev or built version) is configured to call the backend, usually at:
 ```
 http://localhost:5000
 ```
+
+### 🐳 2. Docker Compose (zero-setup deployment)
+
+No need to clone the repo — just copy this Docker Compose config and you're ready to go.
+
+#### 🧪 Step 1: Create `.env` file
+
+```env
+HF_TOKEN=your_huggingface_token
+CACHE_DIR=/optional/cache/dir  # Optional
+```
+
+#### 🐳 Step 2: docker-compose.yml
+
+```yaml
+services:
+  backend:
+    image: baptistelacroix/terranumeria-backend:latest
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - CACHE_DIR=${CACHE_DIR}
+    ports:
+      - "5000:5000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]  # Remove this line if not using GPU
+
+  frontend:
+    image: baptistelacroix/terranumeria-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+```
+
+#### ▶️ Step 3: Run it
+
+```bash
+docker compose up -d
+```
+
+Open the app at: [http://localhost:3000](http://localhost:3000)
+
+---
+
+### 🔄 3. Clone the Repository and Use Docker Compose Locally
+
+If you'd like to clone the repository and use the provided Docker Compose configuration, follow these steps:
+
+#### 🧪 Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/BaptisteLacroix/pns-algo2-terranumeria.git
+cd pns-algo2-terranumeria/
+```
+
+#### 🧩 Step 2: Create `.env` file
+
+In the root of the project, create a `.env` file with your credentials:
+
+```env
+HF_TOKEN=your_huggingface_token
+CACHE_DIR=/optional/cache/dir  # Optional
+```
+
+#### 🐳 Step 3: Run Docker Compose
+
+Now, inside the cloned repository, use the Docker Compose file provided:
+
+```bash
+docker compose up -d
+```
+
+This will pull the necessary Docker images from Docker Hub and start both the frontend and backend services locally.
+
+You can access the application at: [http://localhost:3000](http://localhost:3000)
+
+### ✅ Summary of Options
+
+- **Option 1:** Run in **development mode** by installing dependencies and running the app locally.
+- **Option 2:** Use **Docker Compose** to pull the images and run the app with minimal setup.
+- **Option 3:** Clone the repository, configure your `.env` file, and use Docker Compose locally.
 
 ## 🎓 Educational Goal and Objectives
 
