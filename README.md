@@ -145,7 +145,7 @@ services:
     image: baptistelacroix/terranumeria-backend:latest
     environment:
       - HF_TOKEN=${HF_TOKEN}
-      - CACHE_DIR=${CACHE_DIR}
+      - CACHE_DIR=${CACHE_DIR} # Optional
     ports:
       - "5000:5000"
     deploy:
