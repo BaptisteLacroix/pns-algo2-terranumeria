@@ -15,8 +15,9 @@ import {
     ModalBody,
     useDisclosure,
 } from "@heroui/react";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {ApiService, Profile, CurrentProfile} from "../services/ApiService";
+import {ChangeModel} from "@/components/ChangeModel.tsx";
 
 // Type pour les props du composant
 type SidePanelRightProps = {
@@ -45,8 +46,11 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
     const [profiles, setProfiles] = useState<Record<string, Profile>>({});
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const [errorProfiles, setErrorProfiles] = useState<string | null>(null);
     const {isOpen, onOpen, onClose} = useDisclosure();
+
+    // Nombre de profils à afficher dans la vue principale
+    const MAX_PROFILES_TO_SHOW = 4;
 
     const handleTemperatureChange = (value: any) => {
         if (isNaN(Number(value))) return;
@@ -58,34 +62,32 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
         setTopP(value);
     };
 
-    // Nombre de profils à afficher dans la vue principale
-    const MAX_PROFILES_TO_SHOW = 4;
 
     // Chargement des profils disponibles
-    useEffect(() => {
-        const fetchProfiles = async () => {
-            try {
-                setIsLoading(true);
+    const fetchProfiles = async () => {
+        try {
+            setIsLoading(true);
 
-                // Récupérer tous les profils
-                const profilesData = await ApiService.getAllProfiles();
-                setProfiles(profilesData);
+            // Récupérer tous les profils
+            const profilesData = await ApiService.getAllProfiles();
+            setProfiles(profilesData);
 
-                // Charger également le profil actuel
-                const currentProfileData = await ApiService.getCurrentProfile();
-                if (currentProfileData) {
-                    setCurrentProfile(currentProfileData);
-                }
-
-                setError(null);
-            } catch (err) {
-                console.error("Erreur:", err);
-                setError("Impossible de charger les profils");
-            } finally {
-                setIsLoading(false);
+            // Charger également le profil actuel
+            const currentProfileData = await ApiService.getCurrentProfile();
+            if (currentProfileData) {
+                setCurrentProfile(currentProfileData);
             }
-        };
 
+            setErrorProfiles(null);
+        } catch (err) {
+            console.error("Erreur:", err);
+            setErrorProfiles("Impossible de charger les profils");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchProfiles();
     }, []);
 
@@ -107,10 +109,8 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
             if (data.conversation_id) {
                 window.location.href = `/?conversation=${data.conversation_id}`;
             }
-
-        } catch (err) {
-            console.error("Erreur:", err);
-            setError("Impossible de changer de profil");
+        } catch (err: any) {
+            setErrorProfiles("Impossible de changer de profil: " + err.toString());
         } finally {
             setIsLoading(false);
         }
@@ -210,7 +210,7 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
     };
 
     return (
-        <div className="flex flex-col overflow-y-auto h-screen w-1/6 shadow-xl">
+        <div className="flex flex-col overflow-y-auto h-screen w-1/5 shadow-xl">
             <div className="flex flex-col h-full">
                 <Card className="rounded-none h-full">
                     <CardHeader className="flex gap-3">
@@ -222,8 +222,8 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
                             <div className="flex justify-center my-4">
                                 <Spinner color="primary"/>
                             </div>
-                        ) : error ? (
-                            <div className="text-red-500 my-2">{error}</div>
+                        ) : errorProfiles ? (
+                            <div className="text-red-500 my-2">{errorProfiles}</div>
                         ) : (
                             renderProfiles()
                         )}
@@ -285,7 +285,6 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
       </span>
                             </Tooltip>
                         </div>
-
                         <div className="pl-5 pr-5">
                             <Slider
                                 classNames={{
@@ -325,7 +324,9 @@ export const SidePanelRight: React.FC<SidePanelRightProps> = ({
       </span>
                             </Tooltip>
                         </div>
-
+                        <div className={'flex justify-center mt-5'}>
+                            <ChangeModel />
+                        </div>
                     </CardBody>
                 </Card>
             </div>

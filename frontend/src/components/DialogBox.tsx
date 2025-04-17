@@ -210,7 +210,6 @@ export const DialogBox = ({
         try {
             const response = await ApiService.sendMessage(
                 enrichedMessage,
-                "mistral",
                 temperature,
                 topP,
                 currentConversationId || undefined,
