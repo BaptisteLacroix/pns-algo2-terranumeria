@@ -1,4 +1,5 @@
 setuptools
+bitsandbytes
 bitsandbytes-cuda116
 torch  --find-links https://download.pytorch.org/whl/cu126
 torchvision --find-links https://download.pytorch.org/whl/cu126
@@ -8,7 +9,9 @@ accelerate
 huggingface_hub
 numpy
 pandas
-flask
+Flask
 flask-cors
 protobuf
 tokenizers
+sentencepiece
+loadtime
