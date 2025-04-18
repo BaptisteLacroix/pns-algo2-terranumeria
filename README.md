@@ -92,7 +92,7 @@ Before all, you need to get yourself a [HuggingFace](https://huggingface.co/) to
 
 ```env
 HF_TOKEN=your_huggingface_token
-CACHE_DIR=/optional/cache/dir  # Optional
+CACHE_DIR=/path/to/cache/dir # This path will be used to store the download AI model on the host machine
 ```
 
 #### 🐳 Step 2: docker-compose.yml
