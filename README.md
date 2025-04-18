@@ -101,6 +101,7 @@ CACHE_DIR=/optional/cache/dir  # Optional
 services:
   backend:
     image: baptistelacroix/terranumeria-backend:latest
+    container_name: terranumeria-backend
     environment:
       - HF_TOKEN=${HF_TOKEN}
       - CACHE_DIR=${CACHE_DIR} # Optional
@@ -114,6 +115,7 @@ services:
 
   frontend:
     image: baptistelacroix/terranumeria-frontend:latest
+    container_name: terranumeria-frontend
     ports:
       - "3000:80"
     depends_on:
@@ -121,10 +123,13 @@ services:
 ```
 
 #### ▶️ Step 3: Run it
+Execute the following command in the folder of the docker-compose.yml
 
 ```bash
 docker compose up -d
 ```
+
+> 🚨 Thinks to check the logs of the container, despite saying it is Started, it may still be loading for several minutes (~ 10 min)
 
 Open the app at: [http://localhost:3000](http://localhost:3000)
 ### 🧪 2. Dev mode
