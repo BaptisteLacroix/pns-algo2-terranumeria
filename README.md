@@ -75,62 +75,20 @@ These specifications will help ensure that TerraNumerIA operates effectively, wi
 
 ## 🚀 Getting Started
 
-### 🔧 Frontend
+### ✅ Summary of Options
 
-You can run the frontend in two ways:
+- **[Option 1](#-1-docker-compose-zero-setup-deployment):** Use **Docker Compose** to pull the images and run the app with minimal setup.
+- **[Option 2](#-2-dev-mode):** Run in **development mode** by installing dependencies and running the app locally.
+- **[Option 3](#-3-clone-the-repository-and-use-docker-compose-locally):** Clone the repository, configure your `.env` file, and use Docker Compose locally.
 
-- **Development mode** (with hot reload):
-  ```bash
-  cd frontend/
-  npm install
-  npm run dev
-  ```
 
-- **Static build mode**:
-  After building the project with:
-  ```bash
-  cd frontend/
-  npm run build
-  ```
-  You can serve the static files using a simple static file server like [serve](https://www.npmjs.com/package/serve).
-  Run the following to serve the `dist` folder:
-  ```bash
-  serve ./dist
-  ```
-
-This will start a local server.
-
-### 🐍 Backend
-
-Before launching the backend server, make sure to install dependencies and provide the required credentials as
-command-line arguments.
-
-```bash
-cd backend/
-pip install -r requirements.txt
-python -u -m main <HF_TOKEN> <CACHE_DIR>
-```
-
-Where:
-
-- `<HF_TOKEN>`: Your **Hugging Face API token**.
-- `<CACHE_DIR>`: The directory path where cached models and data will be stored.
-
-You can obtain your Hugging Face token by creating a free account at [huggingface.co](https://huggingface.co/) and
-generating one from your account settings.
-
-This setup ensures secure and local model loading. Once launched, your Flask API server will run locally. Make sure your
-frontend (dev or built version) is configured to call the backend, usually at:
-
-```
-http://localhost:5000
-```
-
-### 🐳 2. Docker Compose (zero-setup deployment)
+### 🐳 1. Docker Compose (zero-setup deployment)
 
 No need to clone the repo — just copy this Docker Compose config and you're ready to go.
 
 #### 🧪 Step 1: Create `.env` file
+
+Before all, you need to get yourself a [HuggingFace](https://huggingface.co/) token.
 
 ```env
 HF_TOKEN=your_huggingface_token
@@ -169,8 +127,57 @@ docker compose up -d
 ```
 
 Open the app at: [http://localhost:3000](http://localhost:3000)
+### 🧪 2. Dev mode
+#### 🔧 Frontend
 
----
+You can run the frontend in two ways:
+
+- **Development mode** (with hot reload):
+  ```bash
+  cd frontend/
+  npm install
+  npm run dev
+  ```
+
+- **Static build mode**:
+  After building the project with:
+  ```bash
+  cd frontend/
+  npm run build
+  ```
+  You can serve the static files using a simple static file server like [serve](https://www.npmjs.com/package/serve).
+  Run the following to serve the `dist` folder:
+  ```bash
+  serve ./dist
+  ```
+
+This will start a local server.
+
+#### 🐍 Backend
+
+Before launching the backend server, make sure to install dependencies and provide the required credentials as
+command-line arguments.
+
+```bash
+cd backend/
+pip install -r requirements.txt
+python -u -m main <HF_TOKEN> <CACHE_DIR>
+```
+
+Where:
+
+- `<HF_TOKEN>`: Your **Hugging Face API token**.
+- `<CACHE_DIR>`: The directory path where cached models and data will be stored.
+
+You can obtain your Hugging Face token by creating a free account at [huggingface.co](https://huggingface.co/) and
+generating one from your account settings.
+
+This setup ensures secure and local model loading. Once launched, your Flask API server will run locally. Make sure your
+frontend (dev or built version) is configured to call the backend, usually at:
+
+```
+http://localhost:5000
+```
 
 ### 🔄 3. Clone the Repository and Use Docker Compose Locally
 
@@ -204,11 +211,6 @@ This will pull the necessary Docker images from Docker Hub and start both the fr
 
 You can access the application at: [http://localhost:3000](http://localhost:3000)
 
-### ✅ Summary of Options
-
-- **Option 1:** Run in **development mode** by installing dependencies and running the app locally.
-- **Option 2:** Use **Docker Compose** to pull the images and run the app with minimal setup.
-- **Option 3:** Clone the repository, configure your `.env` file, and use Docker Compose locally.
 
 ## 🎓 Educational Goal and Objectives
 
