@@ -107,6 +107,8 @@ services:
       - CACHE_DIR=${CACHE_DIR} # Optional
     ports:
       - "5000:5000"
+    volumes:
+      - ${CACHE_DIR}:/cache_dir
     deploy:
       resources:
         reservations:
