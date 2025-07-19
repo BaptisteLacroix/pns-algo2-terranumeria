@@ -2,6 +2,8 @@ import logging
 import re
 import sys
 import traceback
+import time
+import threading
 
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
@@ -23,11 +25,39 @@ app = Flask(__name__)
 
 CORS(app)
 
-logger.info("Loading model")
-# Charger le modèle par défaut (possibilité de changer pour un des nouveaux modèles plus légers)
-model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
-logger.info("Model loaded")
-logger.info("All models are loaded and available in the interface: Mistral, Faradaylab, DeepSeek, CroissantLLM, TinyLlama, Gemma")
+# Initialize model as None to be loaded in background
+model = None
+
+def load_model_in_background():
+    """Loads the model in a background thread to allow the Flask app to start immediately"""
+    global model
+    logger.info("Loading model in background...")
+    
+    try:
+        # Start with default model
+        temp_model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
+        
+        # Pas de fallback vers un modèle plus petit comme demandé
+        if temp_model.ai_model is None:
+            logger.error("❌ Failed to load model, no fallback to smaller models will be attempted")
+        
+        model = temp_model
+        if model.ai_model is not None:
+            logger.info("✅ Model successfully loaded and ready for use")
+        else:
+            logger.warning("⚠️ Model loading failed, application will run with limited functionality")
+    except Exception as e:
+        logger.error(f"❌ Critical error during model loading: {str(e)}")
+        logger.error(traceback.format_exc())
+        # Create a minimal model instance to avoid breaking the application
+        model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
+        
+# Start loading the model in background
+loading_thread = threading.Thread(target=load_model_in_background)
+loading_thread.daemon = True
+loading_thread.start()
+
+logger.info("Server started. Model loading in progress...")
 
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()
@@ -59,6 +89,18 @@ def llm_completions():
     :return: Streaming response
     """
     try:
+        if model is None or model.ai_model is None:
+            if loading_thread.is_alive():
+                return jsonify({
+                    "error": "Model is still loading. Please try again in a few minutes.",
+                    "status": "loading"
+                }), 503
+            else:
+                return jsonify({
+                    "error": "Model failed to load. Please check server logs.",
+                    "status": "failed"
+                }), 500
+        
         data = request.json
         logger.info("Received request data: %s", data)
 
@@ -91,13 +133,15 @@ def llm_completions():
             logger.warning("Prompt is required but missing")
             return jsonify({"error": "Prompt is required"}), 400
 
-        logger.info("Using Mistral model")
+        logger.info(f"Using model: {model.model_path}")
         return Response(llm_response_stream(model, prompt, temperature, top_p),
                         content_type='text/event-stream',
                         status=200)
 
     except Exception as e:
-        logger.error(f"Error in openai_completions: {str(e)}")
+        import traceback
+        logger.error(f"Error in llm_completions: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
 
@@ -318,11 +362,30 @@ def get_current_model():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
-    Health check endpoint.
+    Health check endpoint that provides system status including model loading state.
     """
     logger.info("Health check request received")
+    
+    # Check model loading status
+    if model is None:
+        if loading_thread.is_alive():
+            model_status = "loading"
+        else:
+            model_status = "failed"
+        model_name = "unknown"
+    else:
+        if model.ai_model is None:
+            model_status = "failed"
+            model_name = model.model_path if hasattr(model, 'model_path') else "unknown"
+        else:
+            model_status = "ready"
+            model_name = model.model_path
+    
     return jsonify({
         "status": "ok",
+        "model_status": model_status,
+        "model_name": model_name,
+        "server_time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }), 200
 
 
