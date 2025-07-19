@@ -371,6 +371,8 @@ class Model:
             response_text = ""
             try:
                 for chunk in streamer:
+                    if "<|im_end|>" in chunk:
+                        chunk = chunk.replace("<|im_end|>", "")
                     response_text += chunk
 
                     current_probabilities = self.prob_processor.last_token_probabilities
@@ -402,6 +404,12 @@ class Model:
                     yield f"data: {error_msg}\n\n"
 
             if response_text:
+                # Nettoyer la réponse en supprimant les tokens spéciaux de fin selon le modèle
+                model_path = self.model_path.lower() if self.model_path else ""
+                if "croissantllm" in model_path and "<|im_end|>" in response_text:
+                    # Supprimer le token de fin pour CroissantLLM
+                    response_text = response_text.replace("<|im_end|>", "")
+                    
                 self.chat_history.append({"role": "assistant", "content": response_text})
                 # Sauvegarde de la conversation après chaque réponse
                 self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)
