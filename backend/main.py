@@ -24,9 +24,10 @@ app = Flask(__name__)
 CORS(app)
 
 logger.info("Loading model")
+# Charger le modèle par défaut (possibilité de changer pour un des nouveaux modèles plus légers)
 model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
 logger.info("Model loaded")
-logger.info("All models are loaded")
+logger.info("All models are loaded and available in the interface: Mistral, Faradaylab, DeepSeek, CroissantLLM, TinyLlama, Gemma")
 
 # Initialisation du gestionnaire de conversations
 conversation_manager = ConversationManager()

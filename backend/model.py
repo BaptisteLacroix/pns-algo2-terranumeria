@@ -142,16 +142,34 @@ class Model:
         # Load model and tokenizer (loading them globally for reuse)
         try:
             device_map = {"": 0}  # Map all modules to GPU 0 by default
-            quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=False,
-                bnb_4bit_quant_type="nf4",
-                llm_int8_enable_fp32_cpu_offload=True  # Enable CPU offloading for modules that don't fit in GPU
-            )
-            logger.info(f"🔄 Loading model {self.model_path}...")
-            # Wrapping the model loading call—LoadTime will provide a progress bar based on previous loading times.
-            model = LoadTime(name=self.model_path,
+            
+            # Vérifier si c'est un petit modèle (< 3B de paramètres)
+            is_small_model = any(small_model in self.model_path.lower() 
+                                for small_model in ["croissantllm-1.3b", "tinyllama-1.1b", "gemma-2b"])
+            
+            if is_small_model:
+                # Configuration optimisée pour les petits modèles
+                logger.info(f"🔄 Loading small model {self.model_path} with optimized settings...")
+                # Les petits modèles peuvent être chargés entièrement en float16 sans quantification 4-bit
+                model = LoadTime(name=self.model_path,
+                             fn=lambda: AutoModelForCausalLM.from_pretrained(
+                                 self.model_path,
+                                 torch_dtype=torch.float16,
+                                 device_map=device_map,
+                                 cache_dir=CACHE_DIR,
+                                 low_cpu_mem_usage=True
+                             ))()
+            else:
+                # Configuration pour les modèles plus grands (7B+) avec quantification 4-bit
+                quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.float16,
+                    bnb_4bit_use_double_quant=False,
+                    bnb_4bit_quant_type="nf4",
+                    llm_int8_enable_fp32_cpu_offload=True  # Enable CPU offloading for modules that don't fit in GPU
+                )
+                logger.info(f"🔄 Loading larger model {self.model_path} with 4-bit quantization...")
+                model = LoadTime(name=self.model_path,
                              fn=lambda: AutoModelForCausalLM.from_pretrained(
                                  self.model_path,
                                  torch_dtype=torch.float16,
@@ -162,15 +180,21 @@ class Model:
                                  offload_state_dict=True,  # Enable state dict offloading to save GPU memory
                                  low_cpu_mem_usage=True  # Optimize CPU memory usage
                              ))()
+                
             logger.info("✅ Model loaded successfully")
+            
             # Then load the tokenizer (note: loading the tokenizer after the model is recommended)
             logger.info(f"🔄 Loading tokenizer for {self.model_path}...")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_path, cache_dir=CACHE_DIR)
-            self.tokenizer.pad_token = self.tokenizer.eos_token  # Set pad token
+            
+            # Configurer le pad_token en fonction du modèle
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+                
             logger.info(f"✅ Tokenizer {self.model_path} loaded successfully")
             return model, None
         except Exception as e:
-            logger.info(f"❌ Error loading model or tokenizer: {e}")
+            logger.error(f"❌ Error loading model or tokenizer: {e}")
             return None, e
 
     def generate_response_stream(self, prompt, temperature=0.7, top_p=0.1):
@@ -194,23 +218,40 @@ class Model:
 
             # Create probability processor with fresh state
             self.prob_processor = ProbabilityLogitsProcessor(self.tokenizer)
+            
+            # Ajuster les paramètres de génération selon le modèle
+            model_path = self.model_path.lower() if self.model_path else ""
+            
+            # Paramètres spécifiques aux petits modèles
+            if any(small_model in model_path for small_model in ["croissantllm-1.3b", "tinyllama-1.1b"]):
+                max_new_tokens = 256  # Réduire pour les petits modèles
+                # Augmenter la température pour les petits modèles pour favoriser la diversité
+                if temperature < 0.5:
+                    temperature = 0.7
+            else:
+                max_new_tokens = 512  # Valeur standard pour les modèles plus grands
 
             # Setup streamer
             streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, timeout=900.0)
 
             # Configure generation with logits processor for probabilities
-            generation_kwargs = dict(
-                inputs=input_ids,
-                attention_mask=attention_mask,
-                max_new_tokens=512,
-                temperature=temperature,
-                top_p=top_p,
-                do_sample=True,
-                streamer=streamer,
-                logits_processor=[self.prob_processor],
-                output_scores=True,
-                return_dict_in_generate=True
-            )
+            generation_kwargs = {
+                "inputs": input_ids,
+                "attention_mask": attention_mask,
+                "max_new_tokens": max_new_tokens,
+                "temperature": temperature,
+                "top_p": top_p,
+                "do_sample": True,
+                "streamer": streamer,
+                "logits_processor": [self.prob_processor],
+                "output_scores": True,
+                "return_dict_in_generate": True
+            }
+            
+            # Ajouter des paramètres spécifiques pour certains modèles
+            if "gemma" in model_path:
+                # Gemma peut bénéficier d'un repetition_penalty
+                generation_kwargs["repetition_penalty"] = 1.1
 
             # Start generation in a separate thread
             generation_thread = Thread(target=self.ai_model.generate, kwargs=generation_kwargs)
@@ -268,21 +309,60 @@ class Model:
 
     def format_prompt(self, prompt):
         """
-        Construit le prompt en intégrant l'historique sous la forme :
-        <|user|>
-        Question</s>
-        <|assistant|>
-        Réponse</s>
+        Construit le prompt en intégrant l'historique sous la forme adaptée au modèle utilisé.
+        Différents formats selon le modèle:
+        - Format Mistral/général: <|user|>\nQuestion</s>\n<|assistant|>\nRéponse</s>
+        - Format TinyLlama: <|system|>\nInstruction</s>\n<|user|>\nQuestion</s>\n<|assistant|>\n
+        - Format Gemma: <start_of_turn>user\nQuestion<end_of_turn>\n<start_of_turn>model\n
+        - Format CroissantLLM: <|im_start|>user\nQuestion<|im_end|>\n<|im_start|>assistant\n
         """
         self.chat_history.append({"role": "user", "content": prompt})
 
-        # Construire le prompt formaté
-        formatted_prompt = ""
-        for entry in self.chat_history:
-            role_tag = "<|" + entry["role"] + "|>"
-            formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
-        formatted_prompt += "<|assistant|>\n"  # TODO changer le nom assitant pour un meilleur role play
-        return formatted_prompt
+        # Identifier le modèle pour choisir le format approprié
+        model_path = self.model_path.lower() if self.model_path else ""
+        
+        # Format pour TinyLlama
+        if "tinyllama" in model_path:
+            formatted_prompt = ""
+            for entry in self.chat_history:
+                role = entry["role"]
+                role_tag = f"<|{role}|>"
+                formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
+            formatted_prompt += "<|assistant|>\n"
+            return formatted_prompt
+            
+        # Format pour Gemma
+        elif "gemma" in model_path:
+            formatted_prompt = ""
+            for entry in self.chat_history:
+                role = entry["role"]
+                if role == "system":
+                    # Pour Gemma, les instructions système sont généralement incluses dans le premier tour utilisateur
+                    continue
+                elif role == "user":
+                    formatted_prompt += f"<start_of_turn>user\n{entry['content']}<end_of_turn>\n"
+                elif role == "assistant":
+                    formatted_prompt += f"<start_of_turn>model\n{entry['content']}<end_of_turn>\n"
+            formatted_prompt += "<start_of_turn>model\n"
+            return formatted_prompt
+            
+        # Format pour CroissantLLM
+        elif "croissantllm" in model_path:
+            formatted_prompt = ""
+            for entry in self.chat_history:
+                role = entry["role"]
+                formatted_prompt += f"<|im_start|>{role}\n{entry['content']}<|im_end|>\n"
+            formatted_prompt += "<|im_start|>assistant\n"
+            return formatted_prompt
+            
+        # Format par défaut (Mistral et autres)
+        else:
+            formatted_prompt = ""
+            for entry in self.chat_history:
+                role_tag = "<|" + entry["role"] + "|>"
+                formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
+            formatted_prompt += "<|assistant|>\n"
+            return formatted_prompt
 
     def reset_memory(self):
         """Réinitialise l'historique de conversation en conservant uniquement le prompt système."""

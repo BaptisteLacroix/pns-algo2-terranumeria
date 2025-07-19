@@ -6,4 +6,10 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 export default defineConfig({
     plugins: [react(), tsconfigPaths()],
     base: './',
+    server: {
+      host: '127.0.0.1', // Force l'utilisation de l'IPv4
+      proxy: {
+        '/api': 'http://127.0.0.1:5000',
+      },
+    },
 })

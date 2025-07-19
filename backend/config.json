@@ -11,5 +11,14 @@
     },
     "deepseek-ai": {
         "deepseek-ai-DeepSeek-R1": "https://huggingface.co/deepseek-ai/DeepSeek-R1"
+    },
+    "croissantllm": {
+        "CroissantLLMChat-v0.1": "https://huggingface.co/croissantllm/CroissantLLMChat-v0.1"
+    },
+    "TinyLlama": {
+        "TinyLlama-1.1B-Chat-v1.0": "https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    },
+    "google": {
+        "Gemma-2b-it": "https://huggingface.co/google/gemma-2-2b-it"
     }
 }
