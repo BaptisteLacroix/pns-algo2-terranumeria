@@ -353,6 +353,12 @@ class Model:
             if "gemma" in model_path:
                 # Gemma peut bénéficier d'un repetition_penalty
                 generation_kwargs["repetition_penalty"] = 1.1
+            
+            # Configurer les tokens d'arrêt spécifiques selon le modèle
+            if "croissantllm" in model_path:
+                # Pour CroissantLLM, définir <|im_end|> comme token d'arrêt
+                eos_token_id = self.tokenizer.convert_tokens_to_ids("<|im_end|>")
+                generation_kwargs["eos_token_id"] = eos_token_id
 
             # Start generation in a separate thread
             generation_thread = Thread(target=self.ai_model.generate, kwargs=generation_kwargs)
