@@ -371,8 +371,6 @@ class Model:
             response_text = ""
             try:
                 for chunk in streamer:
-                    if "<|im_end|>" in chunk:
-                        chunk = chunk.replace("<|im_end|>", "")
                     response_text += chunk
 
                     current_probabilities = self.prob_processor.last_token_probabilities
@@ -385,6 +383,7 @@ class Model:
                     # if the last character of chunk is a space
                     if chunk and chunk[-1] == " ":
                         token_text = " " + token_text
+                    token_text = token_text.replace("<|im_end|>", "")
                     json_chunk = json.dumps({
                         "token": token_text,
                         "probabilities": current_probabilities
@@ -409,7 +408,7 @@ class Model:
                 if "croissantllm" in model_path and "<|im_end|>" in response_text:
                     # Supprimer le token de fin pour CroissantLLM
                     response_text = response_text.replace("<|im_end|>", "")
-                    
+
                 self.chat_history.append({"role": "assistant", "content": response_text})
                 # Sauvegarde de la conversation après chaque réponse
                 self.conversation_manager.save_conversation(self.current_conversation_id, self.chat_history)

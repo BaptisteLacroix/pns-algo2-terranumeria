@@ -35,7 +35,7 @@ def load_model_in_background():
     
     try:
         # Start with default model
-        temp_model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
+        temp_model = Model(model_category="croissantllm", model_id="CroissantLLMChat-v0.1", profile_id="default")
         
         # Pas de fallback vers un modèle plus petit comme demandé
         if temp_model.ai_model is None:
