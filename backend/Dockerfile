@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
     && bash miniconda.sh -b -p $CONDA_DIR \
     && rm miniconda.sh \
+    # Accept Anaconda Terms of Service \
+    && $CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main \
+    && $CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r \
     && $CONDA_DIR/bin/conda create -y -n backend_env python=3.11 \
     && $CONDA_DIR/envs/backend_env/bin/pip install --no-cache-dir --upgrade pip \
     && apt-get purge -y build-essential \
