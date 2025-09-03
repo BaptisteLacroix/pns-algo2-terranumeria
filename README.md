@@ -77,10 +77,11 @@ These specifications will help ensure that TerraNumerIA operates effectively, wi
 
 ### ✅ Summary of Options
 
-- **[Option 1](#-1-docker-compose-zero-setup-deployment):** Use **Docker Compose** to pull the images and run the app with minimal setup.
+- **[Option 1](#-1-docker-compose-zero-setup-deployment):** Use **Docker Compose** to pull the images and run the app
+  with minimal setup.
 - **[Option 2](#-2-dev-mode):** Run in **development mode** by installing dependencies and running the app locally.
-- **[Option 3](#-3-clone-the-repository-and-use-docker-compose-locally):** Clone the repository, configure your `.env` file, and use Docker Compose locally.
-
+- **[Option 3](#-3-clone-the-repository-and-use-docker-compose-locally):** Clone the repository, configure your `.env`
+  file, and use Docker Compose locally.
 
 ### 🐳 1. Docker Compose (zero-setup deployment)
 
@@ -109,11 +110,6 @@ services:
       - "5000:5000"
     volumes:
       - ${CACHE_DIR:-./cache}:/cache_dir
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [ gpu ]  # Remove this line if not using GPU
 
   frontend:
     image: baptistelacroix/terranumeria-frontend:latest
@@ -125,16 +121,84 @@ services:
 ```
 
 #### ▶️ Step 3: Run it
+
 Execute the following command in the folder of the docker-compose.yml
 
 ```bash
 docker compose up -d
 ```
 
-> 🚨 Thinks to check the logs of the container, despite saying it is Started, it may still be loading for several minutes (~ 10 min)
+> 🚨 Thinks to check the logs of the container, despite saying it is Started, it may still be loading for several
+> minutes (~ 10 min)
 
 Open the app at: [http://localhost:3000](http://localhost:3000)
+
+## ⚡ CPU vs GPU Execution
+
+The backend image is designed to run on **both CPU-only** machines and **GPU-enabled** machines with NVIDIA CUDA.  
+You don’t need different images — the same container will automatically use the GPU if available.
+
+### ▶️ Running on CPU
+
+If you don’t have an NVIDIA GPU or simply want to run on CPU:
+
+```bash
+docker run -d \
+  -p 5000:5000 \
+  -e HF_TOKEN=your_huggingface_token \
+  --name terranumeria-backend \
+  baptistelacroix/terranumeria-backend:v2
+````
+
+Or with **Docker Compose**, just remove (or comment out) the GPU reservation:
+
+```yaml
+services:
+  backend:
+    image: baptistelacroix/terranumeria-backend:v2
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    ports:
+      - "5000:5000"
+    # No GPU config → runs on CPU
+```
+
+### ▶️ Running with GPU Acceleration
+
+If your machine has an NVIDIA GPU with
+the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+installed, you can give the container access to it.
+
+Using `docker run`:
+
+```bash
+docker run -d \
+  --gpus all \
+  -p 5000:5000 \
+  -e HF_TOKEN=your_huggingface_token \
+  --name terranumeria-backend \
+  baptistelacroix/terranumeria-backend:v2
+```
+
+Using **Docker Compose**, keep the GPU reservation in place:
+
+```yaml
+services:
+  backend:
+    image: baptistelacroix/terranumeria-backend:v2
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    ports:
+      - "5000:5000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [ gpu ]
+```
+
 ### 🧪 2. Dev mode
+
 #### 🔧 Frontend
 
 You can run the frontend in two ways:
@@ -217,7 +281,6 @@ docker compose up -d
 This will pull the necessary Docker images from Docker Hub and start both the frontend and backend services locally.
 
 You can access the application at: [http://localhost:3000](http://localhost:3000)
-
 
 ## 🎓 Educational Goal and Objectives
 

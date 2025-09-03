@@ -11,11 +11,11 @@ services:
       - ./backend/profiles:/app/profiles
     ports:
       - "5000:5000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [ gpu ]
+#    deploy:
+#      resources:
+#        reservations:
+#          devices:
+#            - capabilities: [ gpu ] # Remove the comments if you want to use GPU
 
   frontend:
     build:
