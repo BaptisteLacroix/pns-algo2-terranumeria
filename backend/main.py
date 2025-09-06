@@ -27,20 +27,22 @@ CORS(app)
 
 # Initialize model as None to be loaded in background
 model = None
+default_model = {"category": "TinyLlama", "id": "TinyLlama-1.1B-Chat-v1.0", "profile": "default"}
+
 
 def load_model_in_background():
     """Loads the model in a background thread to allow the Flask app to start immediately"""
     global model
     logger.info("Loading model in background...")
-    
+
     try:
         # Start with default model
-        temp_model = Model(model_category="croissantllm", model_id="CroissantLLMChat-v0.1", profile_id="default")
-        
+        temp_model = Model(model_category=default_model["category"], model_id=default_model["id"],
+                           profile_id=default_model["profile"])
         # Pas de fallback vers un modèle plus petit comme demandé
         if temp_model.ai_model is None:
             logger.error("❌ Failed to load model, no fallback to smaller models will be attempted")
-        
+
         model = temp_model
         if model.ai_model is not None:
             logger.info("✅ Model successfully loaded and ready for use")
@@ -51,7 +53,8 @@ def load_model_in_background():
         logger.error(traceback.format_exc())
         # Create a minimal model instance to avoid breaking the application
         model = Model(model_category="Faradaylab", model_id="ARIA-7B-V3-mistral-french-v1", profile_id="default")
-        
+
+
 # Start loading the model in background
 loading_thread = threading.Thread(target=load_model_in_background)
 loading_thread.daemon = True
@@ -100,7 +103,7 @@ def llm_completions():
                     "error": "Model failed to load. Please check server logs.",
                     "status": "failed"
                 }), 500
-        
+
         data = request.json
         logger.info("Received request data: %s", data)
 
@@ -365,7 +368,7 @@ def health_check():
     Health check endpoint that provides system status including model loading state.
     """
     logger.info("Health check request received")
-    
+
     # Check model loading status
     if model is None:
         if loading_thread.is_alive():
@@ -380,7 +383,7 @@ def health_check():
         else:
             model_status = "ready"
             model_name = model.model_path
-    
+
     return jsonify({
         "status": "ok",
         "model_status": model_status,

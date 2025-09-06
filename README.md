@@ -52,7 +52,7 @@ To ensure optimal performance of TerraNumerIA, please verify that your system me
 **Backend:**
 
 - A computer running Python 3.11 or 3.12 (Higher versions are currently not supported, for package `sentencepiece`).;
-- At least 16 GB of RAM;
+- At least 8 GB of RAM;
 - A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
   used.
 
