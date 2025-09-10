@@ -49,14 +49,14 @@ Through playful and engaging approaches, Terra Numerica promotes:
 
 To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
 
-**Backend:**
+### Backend:
+**Mandatory**
 
-- A computer running Python 3.11 or 3.12 (Higher versions are currently not supported, for package `sentencepiece`).;
+- A computer running Python 3.11 or 3.12;
 - At least 8 GB of RAM;
-- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
-  used.
+- A recent multi-core CPU for handling backend processes.
 
-**CUDA Acceleration (Optional):**
+**Optional (CUDA Acceleration = using GPU)**
 
 For enhanced performance using NVIDIA's CUDA technology, the following additional requirements apply:
 
@@ -97,11 +97,11 @@ CACHE_DIR=/optional/cache/dir  # Optional
 ```
 
 #### 🐳 Step 2: docker-compose.yml
-
+Create a file `docker-compose.yml` in the same folder than the `.env` file and paste the following content inside :
 ```yaml
 services:
   backend:
-    image: baptistelacroix/terranumeria-backend:latest
+    image: arcsti/terranumeria-backend:1.0.0
     container_name: terranumeria-backend
     environment:
       - HF_TOKEN=${HF_TOKEN}
@@ -112,7 +112,7 @@ services:
       - ${CACHE_DIR:-./cache}:/cache_dir
 
   frontend:
-    image: baptistelacroix/terranumeria-frontend:latest
+    image: arcsti/terranumeria-frontend:1.0.0
     container_name: terranumeria-frontend
     ports:
       - "3000:80"
@@ -135,74 +135,45 @@ Open the app at: [http://localhost:3000](http://localhost:3000)
 
 ## ⚡ CPU vs GPU Execution
 
-The backend image is designed to run on **both CPU-only** machines and **GPU-enabled** machines with NVIDIA CUDA.  
-You don’t need different images — the same container will automatically use the GPU if available.
-
-### ▶️ Running on CPU
-
-If you don’t have an NVIDIA GPU or simply want to run on CPU:
-
-```bash
-docker run -d \
-  -p 5000:5000 \
-  -e HF_TOKEN=your_huggingface_token \
-  --name terranumeria-backend \
-  baptistelacroix/terranumeria-backend:v2
-````
-
-Or with **Docker Compose**, just remove (or comment out) the GPU reservation:
+The standard backend image is designed to run on CPU-only machine. You must use the following docker file to try running on a GPU-enabled machine with NVIDIA CUDA.  
 
 ```yaml
 services:
   backend:
-    image: baptistelacroix/terranumeria-backend:v2
+    image: arcsti/terranumeria-backend:1.0.0
+    container_name: terranumeria-backend
     environment:
       - HF_TOKEN=${HF_TOKEN}
+      - CACHE_DIR=${CACHE_DIR} # Optional
     ports:
       - "5000:5000"
-    # No GPU config → runs on CPU
-```
-
-### ▶️ Running with GPU Acceleration
-
-If your machine has an NVIDIA GPU with
-the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-installed, you can give the container access to it.
-
-Using `docker run`:
-
-```bash
-docker run -d \
-  --gpus all \
-  -p 5000:5000 \
-  -e HF_TOKEN=your_huggingface_token \
-  --name terranumeria-backend \
-  baptistelacroix/terranumeria-backend:v2
-```
-
-Using **Docker Compose**, keep the GPU reservation in place:
-
-```yaml
-services:
-  backend:
-    image: baptistelacroix/terranumeria-backend:v2
-    environment:
-      - HF_TOKEN=${HF_TOKEN}
-    ports:
-      - "5000:5000"
+    volumes:
+      - ${CACHE_DIR:-./cache}:/cache_dir
     deploy:
       resources:
         reservations:
           devices:
             - capabilities: [ gpu ]
+
+  frontend:
+    image: arcsti/terranumeria-frontend:1.0.0
+    container_name: terranumeria-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 ```
 
 ### 🧪 2. Dev mode
 
 #### 🔧 Frontend
+Clone the repository with
+```bash
+git clone https://github.com/BaptisteLacroix/pns-algo2-terranumeria.git
+cd pns-algo2-terranumeria/
+```
 
-You can run the frontend in two ways:
-
+Then, you can run the frontend in two ways: 
 - **Development mode** (with hot reload):
   ```bash
   cd frontend/
@@ -278,7 +249,7 @@ Now, inside the cloned repository, use the Docker Compose file provided:
 docker compose up -d
 ```
 
-This will pull the necessary Docker images from Docker Hub and start both the frontend and backend services locally.
+This will pull the necessary base Docker images from Docker Hub, build apps on top of them and start both the frontend and backend services locally.
 
 You can access the application at: [http://localhost:3000](http://localhost:3000)
 
