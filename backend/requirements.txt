@@ -5,3 +5,5 @@ huggingface_hub
 Flask
 flask-cors
 numpy
+accelerate
+loadtime
