@@ -173,7 +173,7 @@ class Model:
             
             # Vérifier si c'est un petit modèle (< 3B de paramètres)
             is_small_model = any(small_model in self.model_path.lower() 
-                                for small_model in ["croissantllm-1.3b", "tinyllama-1.1b", "gemma-2b"])
+                                for small_model in ["croissantllm-1.3b", "tinyllama-1.1b"])
             
             # Function to load model with timeout
             def load_with_timeout(load_fn, timeout):
@@ -348,11 +348,7 @@ class Model:
                 "output_scores": True,
                 "return_dict_in_generate": True
             }
-            
-            # Ajouter des paramètres spécifiques pour certains modèles
-            if "gemma" in model_path:
-                # Gemma peut bénéficier d'un repetition_penalty
-                generation_kwargs["repetition_penalty"] = 1.1
+
             
             # Configurer les tokens d'arrêt spécifiques selon le modèle
             if "croissantllm" in model_path:
@@ -443,21 +439,6 @@ class Model:
                 role_tag = f"<|{role}|>"
                 formatted_prompt += f"{role_tag}\n{entry['content']}</s>\n"
             formatted_prompt += "<|assistant|>\n"
-            return formatted_prompt
-            
-        # Format pour Gemma
-        elif "gemma" in model_path:
-            formatted_prompt = ""
-            for entry in self.chat_history:
-                role = entry["role"]
-                if role == "system":
-                    # Pour Gemma, les instructions système sont généralement incluses dans le premier tour utilisateur
-                    continue
-                elif role == "user":
-                    formatted_prompt += f"<start_of_turn>user\n{entry['content']}<end_of_turn>\n"
-                elif role == "assistant":
-                    formatted_prompt += f"<start_of_turn>model\n{entry['content']}<end_of_turn>\n"
-            formatted_prompt += "<start_of_turn>model\n"
             return formatted_prompt
             
         # Format pour CroissantLLM

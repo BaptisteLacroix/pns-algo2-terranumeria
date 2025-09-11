@@ -17,8 +17,5 @@
     },
     "TinyLlama": {
         "TinyLlama-1.1B-Chat-v1.0": "https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-    },
-    "google": {
-        "Gemma-2b-it": "https://huggingface.co/google/gemma-2-2b-it"
     }
 }

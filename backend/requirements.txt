@@ -2,8 +2,8 @@ setuptools
 torch --find-links https://download.pytorch.org/whl/cpu
 transformers
 huggingface_hub
+numpy
 Flask
 flask-cors
-numpy
 accelerate
 loadtime
