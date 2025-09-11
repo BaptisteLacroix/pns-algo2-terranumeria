@@ -133,7 +133,7 @@ docker compose up -d
 
 Open the app at: [http://localhost:3000](http://localhost:3000)
 
-## ⚡ CPU vs GPU Execution
+#### ⚡ CPU vs GPU Execution
 
 The standard backend image is designed to run on CPU-only machine. You must use the following docker file to try running on a GPU-enabled machine with NVIDIA CUDA.  
 
@@ -251,7 +251,14 @@ docker compose up -d
 
 This will pull the necessary base Docker images from Docker Hub, build apps on top of them and start both the frontend and backend services locally.
 
-You can access the application at: [http://localhost:3000](http://localhost:3000)
+You can access the application at: [http://localhost:3000](http://localhost:3000). You can also configure backend and/or frontend port before running the docker compose by editing some of the the folowwing files :
+- backend/
+  - Dockerfile
+  - main.py
+- frontend/
+  - nginx.conf
+  - vite.config.ts
+- docker-compose.yml
 
 ## 🎓 Educational Goal and Objectives
 
