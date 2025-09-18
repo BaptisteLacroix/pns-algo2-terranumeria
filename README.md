@@ -49,14 +49,14 @@ Through playful and engaging approaches, Terra Numerica promotes:
 
 To ensure optimal performance of TerraNumerIA, please verify that your system meets the following hardware requirements:
 
-**Backend:**
+### Backend:
+**Mandatory**
 
-- A computer running Python 3.11 or 3.12 (Higher versions are currently not supported, for package `sentencepiece`).;
-- At least 16 GB of RAM;
-- A recent multi-core CPU for handling backend processes, especially if multiple sessions or streaming responses are
-  used.
+- A computer running Python 3.11 or 3.12;
+- At least 8 GB of RAM;
+- A recent multi-core CPU for handling backend processes.
 
-**CUDA Acceleration (Optional):**
+**Optional (CUDA Acceleration = using GPU)**
 
 For enhanced performance using NVIDIA's CUDA technology, the following additional requirements apply:
 
@@ -77,10 +77,11 @@ These specifications will help ensure that TerraNumerIA operates effectively, wi
 
 ### ✅ Summary of Options
 
-- **[Option 1](#-1-docker-compose-zero-setup-deployment):** Use **Docker Compose** to pull the images and run the app with minimal setup.
+- **[Option 1](#-1-docker-compose-zero-setup-deployment):** Use **Docker Compose** to pull the images and run the app
+  with minimal setup.
 - **[Option 2](#-2-dev-mode):** Run in **development mode** by installing dependencies and running the app locally.
-- **[Option 3](#-3-clone-the-repository-and-use-docker-compose-locally):** Clone the repository, configure your `.env` file, and use Docker Compose locally.
-
+- **[Option 3](#-3-clone-the-repository-and-use-docker-compose-locally):** Clone the repository, configure your `.env`
+  file, and use Docker Compose locally.
 
 ### 🐳 1. Docker Compose (zero-setup deployment)
 
@@ -96,11 +97,50 @@ CACHE_DIR=/optional/cache/dir  # Optional
 ```
 
 #### 🐳 Step 2: docker-compose.yml
+Create a file `docker-compose.yml` in the same folder than the `.env` file and paste the following content inside :
+```yaml
+services:
+  backend:
+    image: arcsti/terranumeria-backend:1.0.0
+    container_name: terranumeria-backend
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - CACHE_DIR=${CACHE_DIR} # Optional
+    ports:
+      - "5000:5000"
+    volumes:
+      - ${CACHE_DIR:-./cache}:/cache_dir
+
+  frontend:
+    image: arcsti/terranumeria-frontend:1.0.0
+    container_name: terranumeria-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+```
+
+#### ▶️ Step 3: Run it
+
+Execute the following command in the folder of the docker-compose.yml
+
+```bash
+docker compose up -d
+```
+
+> 🚨 Thinks to check the logs of the container, despite saying it is Started, it may still be loading for several
+> minutes (~ 10 min)
+
+Open the app at: [http://localhost:3000](http://localhost:3000)
+
+#### ⚡ CPU vs GPU Execution
+
+The standard backend image is designed to run on CPU-only machine. You must use the following docker file to try running on a GPU-enabled machine with NVIDIA CUDA.  
 
 ```yaml
 services:
   backend:
-    image: baptistelacroix/terranumeria-backend:latest
+    image: arcsti/terranumeria-backend:1.0.0
     container_name: terranumeria-backend
     environment:
       - HF_TOKEN=${HF_TOKEN}
@@ -113,10 +153,10 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: [ gpu ]  # Remove this line if not using GPU
+            - capabilities: [ gpu ]
 
   frontend:
-    image: baptistelacroix/terranumeria-frontend:latest
+    image: arcsti/terranumeria-frontend:1.0.0
     container_name: terranumeria-frontend
     ports:
       - "3000:80"
@@ -124,21 +164,16 @@ services:
       - backend
 ```
 
-#### ▶️ Step 3: Run it
-Execute the following command in the folder of the docker-compose.yml
+### 🧪 2. Dev mode
 
+#### 🔧 Frontend
+Clone the repository with
 ```bash
-docker compose up -d
+git clone https://github.com/BaptisteLacroix/pns-algo2-terranumeria.git
+cd pns-algo2-terranumeria/
 ```
 
-> 🚨 Thinks to check the logs of the container, despite saying it is Started, it may still be loading for several minutes (~ 10 min)
-
-Open the app at: [http://localhost:3000](http://localhost:3000)
-### 🧪 2. Dev mode
-#### 🔧 Frontend
-
-You can run the frontend in two ways:
-
+Then, you can run the frontend in two ways: 
 - **Development mode** (with hot reload):
   ```bash
   cd frontend/
@@ -214,10 +249,16 @@ Now, inside the cloned repository, use the Docker Compose file provided:
 docker compose up -d
 ```
 
-This will pull the necessary Docker images from Docker Hub and start both the frontend and backend services locally.
+This will pull the necessary base Docker images from Docker Hub, build apps on top of them and start both the frontend and backend services locally.
 
-You can access the application at: [http://localhost:3000](http://localhost:3000)
-
+You can access the application at: [http://localhost:3000](http://localhost:3000). You can also configure backend and/or frontend port before running the docker compose by editing some of the the folowwing files :
+- backend/
+  - Dockerfile
+  - main.py
+- frontend/
+  - nginx.conf
+  - vite.config.ts
+- docker-compose.yml
 
 ## 🎓 Educational Goal and Objectives
 

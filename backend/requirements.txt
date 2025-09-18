@@ -1,17 +1,9 @@
 setuptools
-bitsandbytes
-bitsandbytes-cuda116
-torch  --find-links https://download.pytorch.org/whl/cu126
-torchvision --find-links https://download.pytorch.org/whl/cu126
-torchaudio --find-links https://download.pytorch.org/whl/cu126
+torch --find-links https://download.pytorch.org/whl/cpu
 transformers
-accelerate
 huggingface_hub
 numpy
-pandas
 Flask
 flask-cors
-protobuf
-tokenizers
-sentencepiece
+accelerate
 loadtime
